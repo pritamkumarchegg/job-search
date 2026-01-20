@@ -16,6 +16,12 @@ import JobsPage from "./pages/JobsPage";
 import JobDetailPage from "./pages/JobDetailPage";
 import PricingPage from "./pages/PricingPage";
 import DashboardPage from "./pages/DashboardPage";
+import ApplicationsPage from "./pages/ApplicationsPage";
+import SavedJobsPage from "./pages/SavedJobsPage";
+import NotificationsPage from "./pages/NotificationsPage";
+import ProfilePage from "./pages/ProfilePage";
+import MessagesPage from "./pages/MessagesPage";
+import SettingsPage from "./pages/SettingsPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminJobs from "./pages/admin/AdminJobs";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -47,8 +53,6 @@ const AppContent = () => {
       {/* Main pages with layout - for regular users */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/jobs" element={<JobsPage />} />
-        <Route path="/jobs/:id" element={<JobDetailPage />} />
         <Route path="/pricing" element={<PricingPage />} />
       </Route>
 
@@ -63,7 +67,13 @@ const AppContent = () => {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/jobs" element={<JobsPage />} />
         <Route path="/jobs/:id" element={<JobDetailPage />} />
+        <Route path="/applications" element={<ApplicationsPage />} />
+        <Route path="/saved" element={<SavedJobsPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/messages" element={<MessagesPage />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
 
       {/* Admin pages with admin layout - for admin users only */}

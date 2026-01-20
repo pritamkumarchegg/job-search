@@ -62,6 +62,11 @@ services:
       - backend
     networks:
       - jobintel-network
+    volumes:
+      - ./JobIntel/frontend/src:/app/src
+      - ./JobIntel/frontend/public:/app/public
+      - ./JobIntel/frontend/package.json:/app/package.json
+      - ./JobIntel/frontend/vite.config.ts:/app/vite.config.ts
     restart: unless-stopped
 
 networks:
