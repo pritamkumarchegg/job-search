@@ -56,7 +56,7 @@ export function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
       const formData = new FormData();
       formData.append('file', file);
 
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('token');
       const res = await fetch('/api/resume/upload', {
         method: 'POST',
         headers: {
@@ -107,7 +107,7 @@ export function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
 
   const handleDeleteResume = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('token');
       const res = await fetch('/api/resume', {
         method: 'DELETE',
         headers: {

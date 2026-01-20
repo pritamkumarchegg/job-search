@@ -108,7 +108,7 @@ export default function MatchedJobsPage() {
     const fetchMatches = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('auth_token');
+        const token = localStorage.getItem('token');
         const res = await fetch('/api/matching/my-jobs?limit=1000', {
           headers: {
             ...(token && { Authorization: `Bearer ${token}` }),
