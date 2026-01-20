@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuthStore } from '@/store/authStore';
 import { useToast } from '@/hooks/use-toast';
+import { ResumeUpload } from '@/components/ResumeUpload';
 import { Loader2, User, Mail, Phone, Briefcase } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -78,6 +79,9 @@ export default function ProfilePage() {
           Manage your profile information and preferences.
         </p>
       </div>
+
+      {/* Resume Upload */}
+      <ResumeUpload />
 
       <Card>
         <CardHeader>

@@ -11,6 +11,7 @@ import {
   Crown,
   ChevronLeft,
   Menu,
+  Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ import { Button } from '@/components/ui/button';
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Briefcase, label: 'Browse Jobs', path: '/jobs' },
+  { icon: Zap, label: 'Matched Jobs', path: '/matched-jobs' },
   { icon: Briefcase, label: 'All Jobs', path: '/all-jobs' },
   { icon: FileText, label: 'My Applications', path: '/applications' },
   { icon: Bookmark, label: 'Saved Jobs', path: '/saved' },
