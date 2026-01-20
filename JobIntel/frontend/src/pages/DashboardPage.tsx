@@ -130,8 +130,8 @@ const DashboardPage = () => {
     const fetchMatches = async () => {
       try {
         const base = backendBase ? backendBase.replace(/\/$/, '') : '';
-        const url = base ? `${base}/api/jobs?status=active` : '/api/jobs?status=active';
-        console.log('🔍 [DashboardPage] Fetching jobs from URL:', url);
+        const url = base ? `${base}/api/matching/my-jobs?limit=3` : '/api/matching/my-jobs?limit=3';
+        console.log('🔍 [DashboardPage] Fetching matched jobs from URL:', url);
 
         const token = localStorage.getItem('token');
         const headers: Record<string, string> = {
@@ -145,22 +145,22 @@ const DashboardPage = () => {
           cache: 'no-store',
           headers,
         });
-        console.log('🔍 [DashboardPage] Jobs API response status:', res.status);
+        console.log('🔍 [DashboardPage] Matched jobs API response status:', res.status);
 
         if (!res.ok) {
-          console.warn('🔍 [DashboardPage] Jobs API returned non-ok status:', res.status);
+          console.warn('🔍 [DashboardPage] Matched jobs API returned non-ok status:', res.status);
           return;
         }
 
-        const jobs = await res.json();
-        console.log('🔍 [DashboardPage] Jobs API response data:', jobs);
+        const data = await res.json();
+        console.log('🔍 [DashboardPage] Matched jobs API response data:', data);
 
         if (!mounted) {
           console.log('🔍 [DashboardPage] Component unmounted, not updating jobs');
           return;
         }
 
-        const jobsArray = Array.isArray(jobs) ? jobs.slice(0, 3) : [];
+        const jobsArray = Array.isArray(data) ? data.slice(0, 3) : (data.matches || []).slice(0, 3);
         console.log('🔍 [DashboardPage] Setting matched jobs:', jobsArray.length, 'jobs');
         setMatchedJobs(jobsArray);
       } catch (e) {

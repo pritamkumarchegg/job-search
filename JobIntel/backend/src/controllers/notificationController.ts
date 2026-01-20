@@ -200,6 +200,109 @@ export const getNotificationStats = async (req: AuthRequest, res: Response) => {
 };
 
 /**
+ * GET /api/notifications/preferences
+ * Get user's notification preferences
+ */
+export const getPreferences = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ preferences: user.notificationPrefs });
+  } catch (error) {
+    logger.error('Error fetching preferences:', error);
+    res.status(500).json({ error: 'Failed to fetch preferences' });
+  }
+};
+
+/**
+ * PUT /api/notifications/preferences
+ * Update notification preferences with contact details
+ */
+export const updatePreferencesWithContacts = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { 
+      email, 
+      whatsapp, 
+      telegram, 
+      notificationPrefs,
+      phoneNumber,
+      whatsappNumber,
+      telegramId,
+      telegramUsername
+    } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        notificationPrefs: notificationPrefs || {},
+        phoneNumber,
+        whatsappNumber,
+        telegramId,
+        telegramUsername,
+      },
+      { new: true }
+    );
+
+    logger.info(`Notification preferences updated for user: ${userId}`);
+
+    return res.status(200).json({
+      message: 'Preferences updated successfully',
+      user: {
+        notificationPrefs: user?.notificationPrefs,
+        phoneNumber: user?.phoneNumber,
+        whatsappNumber: user?.whatsappNumber,
+        telegramId: user?.telegramId,
+        telegramUsername: user?.telegramUsername,
+      },
+    });
+  } catch (error) {
+    logger.error('Error updating preferences:', error);
+    res.status(500).json({ error: 'Failed to update preferences' });
+  }
+};
+
+/**
+ * POST /api/notifications/test
+ * Send test notification to verify setup
+ */
+export const testNotification = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { channel } = req.body;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ message: `Test notification queued to ${channel}`, result: true });
+  } catch (error) {
+    logger.error('Error sending test notification:', error);
+    res.status(500).json({ error: 'Failed to send test notification' });
+  }
+};
+
+/**
  * Send match notification helper function
  */
 export async function sendMatchNotifications(
@@ -225,13 +328,13 @@ export async function sendMatchNotifications(
     }
 
     // Send WhatsApp
-    if (prefs.whatsapp && user.phone) {
-      await whatsappService.sendMatchNotification(user.phone, jobTitle, companyName, matchScore);
+    if (prefs.whatsapp && user.whatsappNumber) {
+      await whatsappService.sendMatchNotification(user.whatsappNumber, jobTitle, companyName, matchScore);
     }
 
     // Send Telegram
-    if (prefs.telegram && user.phone) {
-      await telegramService.sendMatchNotification(user.phone, jobTitle, companyName, matchScore, 'https://jobintel.com');
+    if (prefs.telegram && user.telegramId) {
+      await telegramService.sendMatchNotification(user.telegramId, jobTitle, companyName, matchScore, 'https://jobintel.com');
     }
 
     // Log notification

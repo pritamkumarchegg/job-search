@@ -7,6 +7,10 @@ export interface IUser extends mongoose.Document {
   passwordHash: string;
   name?: string;
   phone?: string;
+  phoneNumber?: string;
+  whatsappNumber?: string;
+  telegramId?: string;
+  telegramUsername?: string;
   location?: string;
   bio?: string;
   skills?: string[];
@@ -22,6 +26,9 @@ export interface IUser extends mongoose.Document {
     jobAlerts?: boolean;
     applicationUpdates?: boolean;
     weeklyDigest?: boolean;
+    quietHoursStart?: string;
+    quietHoursEnd?: string;
+    timezone?: string;
   };
   consent?: {
     autoApply?: boolean;
@@ -35,6 +42,10 @@ const UserSchema = new Schema<IUser>(
     passwordHash: { type: String, required: true },
     name: String,
     phone: String,
+    phoneNumber: String,
+    whatsappNumber: String,
+    telegramId: String,
+    telegramUsername: String,
     location: String,
     bio: String,
     skills: { type: [String], default: [] },
@@ -50,6 +61,9 @@ const UserSchema = new Schema<IUser>(
       jobAlerts: { type: Boolean, default: true },
       applicationUpdates: { type: Boolean, default: true },
       weeklyDigest: { type: Boolean, default: false },
+      quietHoursStart: { type: String, default: "22:00" },
+      quietHoursEnd: { type: String, default: "08:00" },
+      timezone: { type: String, default: "Asia/Kolkata" },
     },
     consent: {
       autoApply: { type: Boolean, default: false },
