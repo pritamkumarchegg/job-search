@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
 import { useApplicationStore } from '@/store/applicationStore';
 import {
@@ -32,15 +34,25 @@ import {
   Calendar,
   Target,
   Zap,
+  User,
+  Activity,
+  Award,
+  X,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const DashboardPage = () => {
+  console.log('🔍 [DashboardPage] Component rendered/updated');
+
   const { user, isAuthenticated } = useAuthStore();
+  console.log('🔍 [DashboardPage] Auth state:', { isAuthenticated, user: user ? { id: user.id, name: user.name, email: user.email, tier: user.tier } : null });
 
   if (!isAuthenticated || !user) {
+    console.log('🔍 [DashboardPage] User not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
+
+  console.log('🔍 [DashboardPage] User authenticated, proceeding with dashboard render');
 
   // Add extra safety check for notificationPreferences
   const notifPrefs = user.notificationPreferences || {
@@ -52,13 +64,19 @@ const DashboardPage = () => {
     applicationUpdate: true,
     referralUpdate: false,
   };
+  console.log('🔍 [DashboardPage] Notification preferences:', notifPrefs);
 
   // Real-time data: fetch from backend and stay in sync with app store
   const backendBase = (import.meta as any).env?.VITE_API_URL || '';
+  console.log('🔍 [DashboardPage] Backend base URL:', backendBase);
+
   const [matchedJobs, setMatchedJobs] = useState<any[]>([]);
   const [profileFields, setProfileFields] = useState<any[]>([]);
   const appStore = useApplicationStore();
+  console.log('🔍 [DashboardPage] Application store state:', { applicationsCount: Object.keys(appStore.applications || {}).length });
+
   const [recentApplications, setRecentApplications] = useState<any[]>(Object.values(appStore.applications || {}));
+  console.log('🔍 [DashboardPage] Initial recent applications:', recentApplications.length);
   // Edit profile modal state (profile only)
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [profileForm, setProfileForm] = useState<any>({
@@ -101,91 +119,189 @@ const DashboardPage = () => {
 
   // Fetch matched jobs from backend (top matches). Keep lightweight and update periodically.
   useEffect(() => {
+    console.log('🔍 [DashboardPage] useEffect: Fetching matched jobs');
     let mounted = true;
     const fetchMatches = async () => {
       try {
         const base = backendBase ? backendBase.replace(/\/$/, '') : '';
         const url = base ? `${base}/api/jobs?status=active` : '/api/jobs?status=active';
+        console.log('🔍 [DashboardPage] Fetching jobs from URL:', url);
+
         const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) return;
+        console.log('🔍 [DashboardPage] Jobs API response status:', res.status);
+
+        if (!res.ok) {
+          console.warn('🔍 [DashboardPage] Jobs API returned non-ok status:', res.status);
+          return;
+        }
+
         const jobs = await res.json();
-        if (!mounted) return;
-        setMatchedJobs(Array.isArray(jobs) ? jobs.slice(0, 3) : []);
+        console.log('🔍 [DashboardPage] Jobs API response data:', jobs);
+
+        if (!mounted) {
+          console.log('🔍 [DashboardPage] Component unmounted, not updating jobs');
+          return;
+        }
+
+        const jobsArray = Array.isArray(jobs) ? jobs.slice(0, 3) : [];
+        console.log('🔍 [DashboardPage] Setting matched jobs:', jobsArray.length, 'jobs');
+        setMatchedJobs(jobsArray);
       } catch (e) {
-        console.warn('failed to fetch matched jobs', e);
+        console.error('🔍 [DashboardPage] Failed to fetch matched jobs:', e);
       }
     };
     fetchMatches();
     const iv = setInterval(fetchMatches, 15000);
-    return () => { mounted = false; clearInterval(iv); };
+    console.log('🔍 [DashboardPage] Set up jobs polling interval');
+
+    return () => {
+      console.log('🔍 [DashboardPage] Cleaning up jobs polling interval');
+      mounted = false;
+      clearInterval(iv);
+    };
   }, [backendBase, user]);
 
   // Fetch user's applications from backend and keep in sync with application store (SSE updates)
   useEffect(() => {
+    console.log('🔍 [DashboardPage] useEffect: Fetching user applications');
     let mounted = true;
     const fetchApps = async () => {
-      if (!user || !user.id) return;
+      if (!user || !user.id) {
+        console.log('🔍 [DashboardPage] No user or user ID, skipping applications fetch');
+        return;
+      }
+
       try {
         const base = backendBase ? backendBase.replace(/\/$/, '') : '';
         const url = base ? `${base}/api/applications?userId=${user.id}` : `/api/applications?userId=${user.id}`;
+        console.log('🔍 [DashboardPage] Fetching applications from URL:', url);
+
         const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) return;
+        console.log('🔍 [DashboardPage] Applications API response status:', res.status);
+
+        if (!res.ok) {
+          console.warn('🔍 [DashboardPage] Applications API returned non-ok status:', res.status);
+          return;
+        }
+
         const apps = await res.json();
-        if (!mounted) return;
-        setRecentApplications(Array.isArray(apps) ? apps : []);
+        console.log('🔍 [DashboardPage] Applications API response data:', apps);
+
+        if (!mounted) {
+          console.log('🔍 [DashboardPage] Component unmounted, not updating applications');
+          return;
+        }
+
+        const appsArray = Array.isArray(apps) ? apps : [];
+        console.log('🔍 [DashboardPage] Setting recent applications:', appsArray.length, 'applications');
+        setRecentApplications(appsArray);
       } catch (e) {
-        console.warn('failed to fetch recent applications', e);
+        console.error('🔍 [DashboardPage] Failed to fetch recent applications:', e);
       }
     };
     fetchApps();
     const iv = setInterval(fetchApps, 15000);
-    return () => { mounted = false; clearInterval(iv); };
+    console.log('🔍 [DashboardPage] Set up applications polling interval');
+
+    return () => {
+      console.log('🔍 [DashboardPage] Cleaning up applications polling interval');
+      mounted = false;
+      clearInterval(iv);
+    };
   }, [backendBase, user]);
 
   // Keep in-sync with application store (SSE may update appStore.application map)
   useEffect(() => {
-    setRecentApplications(Object.values(appStore.applications || {}));
+    console.log('🔍 [DashboardPage] useEffect: Syncing with application store');
+    const apps = Object.values(appStore.applications || {});
+    console.log('🔍 [DashboardPage] Application store has', apps.length, 'applications');
+    console.log('🔍 [DashboardPage] Application store applications:', apps);
+    setRecentApplications(apps);
   }, [appStore.applications]);
 
   // Load available skills when skills modal opens
   useEffect(() => {
-    if (!editSkillsOpen) return;
+    if (!editSkillsOpen) {
+      console.log('🔍 [DashboardPage] Skills modal not open, skipping skills fetch');
+      return;
+    }
+
+    console.log('🔍 [DashboardPage] useEffect: Loading available skills for modal');
     let mounted = true;
     const fetchSkills = async () => {
       try {
         const base = backendBase ? backendBase.replace(/\/$/, '') : '';
         const url = base ? `${base}/api/skills` : '/api/skills';
+        console.log('🔍 [DashboardPage] Fetching skills from URL:', url);
+
         const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) return;
+        console.log('🔍 [DashboardPage] Skills API response status:', res.status);
+
+        if (!res.ok) {
+          console.warn('🔍 [DashboardPage] Skills API returned non-ok status:', res.status);
+          return;
+        }
+
         const skills = await res.json();
-        if (!mounted) return;
-        setAvailableSkills(Array.isArray(skills) ? skills : []);
+        console.log('🔍 [DashboardPage] Skills API response data:', skills);
+
+        if (!mounted) {
+          console.log('🔍 [DashboardPage] Component unmounted, not updating skills');
+          return;
+        }
+
+        const skillsArray = Array.isArray(skills) ? skills : [];
+        console.log('🔍 [DashboardPage] Setting available skills:', skillsArray.length, 'skills');
+        setAvailableSkills(skillsArray);
       } catch (e) {
-        console.warn('failed to fetch skills', e);
+        console.error('🔍 [DashboardPage] Failed to fetch skills:', e);
       }
     };
     fetchSkills();
-    return () => { mounted = false; };
+    return () => {
+      console.log('🔍 [DashboardPage] Cleaning up skills fetch');
+      mounted = false;
+    };
   }, [editSkillsOpen, backendBase]);
 
   // Load profile fields when profile modal opens (or on mount)
   useEffect(() => {
+    console.log('🔍 [DashboardPage] useEffect: Loading profile fields for modal');
     let mounted = true;
     const fetchFields = async () => {
       try {
         const base = backendBase ? backendBase.replace(/\/$/, '') : '';
         const url = base ? `${base}/api/profile-fields` : '/api/profile-fields';
+        console.log('🔍 [DashboardPage] Fetching profile fields for modal from URL:', url);
+
         const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) return;
+        console.log('🔍 [DashboardPage] Profile fields modal API response status:', res.status);
+
+        if (!res.ok) {
+          console.warn('🔍 [DashboardPage] Profile fields modal API returned non-ok status:', res.status);
+          return;
+        }
+
         const fields = await res.json();
-        if (!mounted) return;
-        setProfileFields(Array.isArray(fields) ? fields : []);
+        console.log('🔍 [DashboardPage] Profile fields modal API response data:', fields);
+
+        if (!mounted) {
+          console.log('🔍 [DashboardPage] Component unmounted, not updating profile fields for modal');
+          return;
+        }
+
+        const fieldsArray = Array.isArray(fields) ? fields : [];
+        console.log('🔍 [DashboardPage] Setting profile fields for modal:', fieldsArray.length, 'fields');
+        setProfileFields(fieldsArray);
       } catch (e) {
-        console.warn('failed to fetch profile fields', e);
+        console.error('🔍 [DashboardPage] Failed to fetch profile fields for modal:', e);
       }
     };
     fetchFields();
-    return () => { mounted = false; };
+    return () => {
+      console.log('🔍 [DashboardPage] Cleaning up profile fields modal fetch');
+      mounted = false;
+    };
   }, [backendBase]);
 
   // keep profile form and skills form in sync with current user
@@ -285,383 +401,321 @@ const DashboardPage = () => {
     }
   };
 
+  console.log('🔍 [DashboardPage] Rendering component');
+  console.log('🔍 [DashboardPage] Current user:', user);
+  console.log('🔍 [DashboardPage] Matched jobs count:', matchedJobs.length);
+  console.log('🔍 [DashboardPage] Recent applications count:', recentApplications.length);
+  console.log('🔍 [DashboardPage] Profile fields count:', profileFields.length);
+  console.log('🔍 [DashboardPage] Available skills count:', availableSkills.length);
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">
-              Welcome back, {user.name.split(' ')[0]}! 👋
-            </h1>
-            <p className="text-muted-foreground">
-              Here's what's happening with your job search today.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {user.tier === 'free' && (
-              <Link to="/pricing">
-                <Button variant="premium">
-                  <Crown className="h-4 w-4 mr-2" />
-                  Upgrade to Premium
-                </Button>
-              </Link>
-            )}
-            <Badge variant={user.tier === 'premium' ? 'premium' : 'free'} className="py-1.5">
-              {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)}
-            </Badge>
-          </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Welcome back, {user?.name || 'User'}! Here's your job search overview.
+          </p>
         </div>
+      </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {stats.map((stat, index) => (
-            <div
-              key={stat.label}
-              className="bg-card rounded-xl p-5 border border-border shadow-soft animate-fade-in"
-              style={{ animationDelay: `${index * 0.05}s` }}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                <span className="text-3xl font-bold">{stat.value}</span>
-              </div>
-              <p className="text-sm text-muted-foreground">{stat.label}</p>
-            </div>
-          ))}
-        </div>
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="matches">Job Matches</TabsTrigger>
+          <TabsTrigger value="applications">Applications</TabsTrigger>
+          <TabsTrigger value="profile">Profile</TabsTrigger>
+        </TabsList>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Profile Completion */}
-            <div className="bg-card rounded-xl p-6 border border-border">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">Profile Completion</h2>
-                <Button variant="ghost" size="sm" onClick={() => setEditProfileOpen(true)}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Edit Profile
-                </Button>
-              </div>
-              <Progress value={user.profileCompletion || 0} className="h-2 mb-3" />
-              <p className="text-sm text-muted-foreground">
-                Your profile is {user.profileCompletion || 0}% complete. Add more skills to improve job matching.
-              </p>
-            </div>
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Matched Jobs</CardTitle>
+                <Briefcase className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{matchedJobs.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  Jobs that match your profile
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Applications</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{recentApplications.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  Jobs you've applied to
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Profile Completion</CardTitle>
+                <User className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {user?.skills?.length ? Math.min(100, (user.skills.length * 10) + 50) : 50}%
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Complete your profile for better matches
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Skills</CardTitle>
+                <Zap className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{user?.skills?.length || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  Skills in your profile
+                </p>
+              </CardContent>
+            </Card>
+          </div>
 
-            {/* Edit Profile Dialog */}
-            <Dialog open={editProfileOpen} onOpenChange={setEditProfileOpen}>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Edit Profile</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-2">
-                  <div>
-                    <Label>Name</Label>
-                    <Input value={profileForm.name} onChange={(e: any) => setProfileForm((p: any) => ({ ...p, name: e.target.value }))} />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Job Matches</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {matchedJobs.length > 0 ? (
+                  <div className="space-y-4">
+                    {matchedJobs.slice(0, 3).map((job: any) => (
+                      <div key={job._id} className="flex items-center space-x-4">
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium leading-none">{job.title}</p>
+                          <p className="text-sm text-muted-foreground">{job.company}</p>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {job.location}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div>
-                    <Label>Email</Label>
-                    <Input value={profileForm.email} onChange={(e: any) => setProfileForm((p: any) => ({ ...p, email: e.target.value }))} />
-                  </div>
-                  <div>
-                    <Label>Phone</Label>
-                    <Input value={profileForm.phone} onChange={(e: any) => setProfileForm((p: any) => ({ ...p, phone: e.target.value }))} />
-                  </div>
-                  <div>
-                    <Label>Batch</Label>
-                    <Input value={profileForm.batch} onChange={(e: any) => setProfileForm((p: any) => ({ ...p, batch: e.target.value }))} />
-                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No job matches yet</p>
+                )}
+              </CardContent>
+            </Card>
 
-                  {/* Render admin-defined profile fields */}
-                  {(profileFields || []).map((f: any) => (
-                    <div key={f.key}>
-                      <Label>{f.label}</Label>
-                      {f.type === 'select' ? (
-                        <select
-                          className="w-full p-2 border rounded"
-                          value={profileForm[f.key] ?? ''}
-                          onChange={(e: any) => setProfileForm((p: any) => ({ ...p, [f.key]: e.target.value }))}
-                        >
-                          <option value="">Select…</option>
-                          {(f.options || []).map((opt: string) => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <Input
-                          value={profileForm[f.key] ?? ''}
-                          onChange={(e: any) => setProfileForm((p: any) => ({ ...p, [f.key]: e.target.value }))}
-                        />
-                      )}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Applications</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {recentApplications.length > 0 ? (
+                  <div className="space-y-4">
+                    {recentApplications.slice(0, 3).map((app: any) => (
+                      <div key={app._id} className="flex items-center space-x-4">
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium leading-none">{app.job?.title || 'Unknown Job'}</p>
+                          <p className="text-sm text-muted-foreground">{app.job?.company || 'Unknown Company'}</p>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {new Date(app.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No applications yet</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="matches" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Job Matches</CardTitle>
+              <CardDescription>
+                Jobs that match your skills and profile
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {matchedJobs.length > 0 ? (
+                <div className="space-y-4">
+                  {matchedJobs.map((job: any) => (
+                    <div key={job._id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h3 className="font-semibold">{job.title}</h3>
+                          <p className="text-sm text-muted-foreground">{job.company}</p>
+                          <p className="text-sm">{job.location}</p>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {job.skills?.slice(0, 3).map((skill: string) => (
+                              <Badge key={skill} variant="secondary" className="text-xs">
+                                {skill}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <Button size="sm">Apply Now</Button>
+                      </div>
                     </div>
                   ))}
                 </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setEditProfileOpen(false)}>Cancel</Button>
-                  <Button onClick={saveProfile} disabled={savingProfile}>{savingProfile ? 'Saving...' : 'Save Profile'}</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-
-            {/* Edit Skills Dialog */}
-            <Dialog open={editSkillsOpen} onOpenChange={setEditSkillsOpen}>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Edit Skills</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-2">
-                  <div>
-                    <Label className="mb-2">Select skills (tags)</Label>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {(skillsForm || []).map((sk) => (
-                        <Badge key={sk} variant="secondary" onClick={() => toggleSkill(sk)}>{sk}</Badge>
-                      ))}
-                    </div>
-                    <div className="flex gap-2 items-center mb-3">
-                      <Input placeholder="Add custom skill" value={newSkill} onChange={(e:any) => setNewSkill(e.target.value)} />
-                      <Button size="sm" onClick={addCustomSkill}>Add</Button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 max-h-48 overflow-auto">
-                      {availableSkills.map((sk) => (
-                        <label key={sk} className="flex items-center gap-2">
-                          <Checkbox checked={(skillsForm || []).includes(sk)} onCheckedChange={() => toggleSkill(sk)} />
-                          <span className="text-sm">{sk}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setEditSkillsOpen(false)}>Cancel</Button>
-                  <Button onClick={saveSkills} disabled={savingSkills}>{savingSkills ? 'Saving...' : 'Save Skills'}</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-
-            {/* Top Job Matches */}
-            <div className="bg-card rounded-xl p-6 border border-border">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-accent" />
-                  Top Job Matches
-                </h2>
-                <Link to="/jobs">
-                  <Button variant="ghost" size="sm">
-                    View All
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </Link>
-              </div>
-
-              <div className="space-y-4">
-                {matchedJobs.slice(0, 3).map((job, index) => (
-                  <div
-                    key={job.id || job._id || `match-${index}`}
-                    className="flex items-start gap-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors animate-fade-in"
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    <div className="h-12 w-12 rounded-lg bg-background flex items-center justify-center flex-shrink-0">
-                      <Building2 className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <Link to={`/jobs/${job.id || job._id}`}> 
-                            <h3 className="font-medium hover:text-primary transition-colors line-clamp-1">
-                              {job.title || job.name || 'Untitled Job'}
-                            </h3>
-                          </Link>
-                          <p className="text-sm text-muted-foreground">{job.company?.name || job.meta?.company || 'Company'}</p>
-                        </div>
-                        <Badge variant="success" className="flex-shrink-0">
-                          <TrendingUp className="h-3 w-3 mr-1" />
-                          {job.matchScore}%
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {job.location}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {new Date(job.postedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                    <a href={job.applyLink} target="_blank" rel="noopener noreferrer">
-                      <Button variant="accent" size="sm">
-                        Apply
-                        <ExternalLink className="h-3 w-3 ml-1" />
-                      </Button>
-                    </a>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Recent Applications */}
-            <div className="bg-card rounded-xl p-6 border border-border">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  Recent Applications
-                </h2>
-                <Link to="/applications">
-                  <Button variant="ghost" size="sm">
-                    View All
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </Link>
-              </div>
-
-              <div className="space-y-4">
-                {recentApplications.map((app, index) => (
-                  <div
-                    key={app._id || app.id || `app-${index}`}
-                    className="flex items-center gap-4 p-4 rounded-lg bg-muted/50 animate-fade-in"
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    <div className="h-10 w-10 rounded-lg bg-background flex items-center justify-center flex-shrink-0">
-                      <Building2 className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium line-clamp-1">{app.job?.title || 'Untitled Job'}</h3>
-                      <p className="text-sm text-muted-foreground">{app.job?.company?.name || 'Company'}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {getStatusBadge(app.status)}
-                      {app.autoApplied && (
-                        <Badge variant="secondary" className="gap-1">
-                          <Zap className="h-3 w-3" />
-                          Auto
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Notification Preferences */}
-            <div className="bg-card rounded-xl p-6 border border-border">
-              <h2 className="font-semibold mb-4 flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Notification Channels
-              </h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
-                      <MessageCircle className="h-4 w-4 text-green-600" />
-                    </div>
-                    <Label htmlFor="whatsapp">WhatsApp</Label>
-                  </div>
-                  <Switch
-                    id="whatsapp"
-                    checked={notifPrefs.whatsapp}
-                    disabled={user.tier === 'free'}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                      <Mail className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <Label htmlFor="email">Email</Label>
-                  </div>
-                  <Switch
-                    id="email"
-                    checked={notifPrefs.email}
-                    disabled={user.tier === 'free'}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-sky-500/10 flex items-center justify-center">
-                      <Send className="h-4 w-4 text-sky-600" />
-                    </div>
-                    <Label htmlFor="telegram">Telegram</Label>
-                  </div>
-                  <Switch
-                    id="telegram"
-                    checked={notifPrefs.telegram}
-                    disabled={user.tier === 'free'}
-                  />
-                </div>
-                {user.tier === 'free' && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Upgrade to Premium to enable notifications.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Skills */}
-            <div className="bg-card rounded-xl p-6 border border-border">
-              <h2 className="font-semibold mb-4">Your Skills</h2>
-              <div className="flex flex-wrap gap-2">
-                {user.skills.map((skill) => (
-                  <Badge key={skill} variant="secondary">
-                    {skill}
-                  </Badge>
-                ))}
-              </div>
-              <Button variant="ghost" size="sm" className="mt-4 w-full" onClick={() => setEditSkillsOpen(true)}>
-                + Add More Skills
-              </Button>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="bg-card rounded-xl p-6 border border-border">
-              <h2 className="font-semibold mb-4">Quick Actions</h2>
-              <div className="space-y-2">
-                <Link to="/jobs">
-                  <Button variant="outline" className="w-full justify-start">
-                    <Briefcase className="h-4 w-4 mr-2" />
-                    Browse Jobs
-                  </Button>
-                </Link>
-                <Button variant="outline" className="w-full justify-start">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Upload Resume
-                </Button>
-                <Link to="/settings">
-                  <Button variant="outline" className="w-full justify-start">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Upgrade CTA */}
-            {user.tier !== 'ultra' && (
-              <div className="gradient-hero rounded-xl p-6 text-white">
-                <h3 className="font-semibold mb-2">
-                  {user.tier === 'free' ? 'Unlock Premium Features' : 'Go Ultra Premium'}
-                </h3>
-                <p className="text-sm text-white/80 mb-4">
-                  {user.tier === 'free'
-                    ? 'Get AI matching, instant notifications, and early job access.'
-                    : 'Enable auto-apply, AI cover letters, and priority support.'}
+              ) : (
+                <p className="text-center text-muted-foreground py-8">
+                  No job matches found. Update your profile and skills to get better matches.
                 </p>
-                <Link to="/pricing">
-                  <Button variant="heroOutline" className="w-full">
-                    Upgrade Now
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </Link>
-              </div>
-            )}
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="applications" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Applications</CardTitle>
+              <CardDescription>
+                Track the status of your job applications
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {recentApplications.length > 0 ? (
+                <div className="space-y-4">
+                  {recentApplications.map((app: any) => (
+                    <div key={app._id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h3 className="font-semibold">{app.job?.title || 'Unknown Job'}</h3>
+                          <p className="text-sm text-muted-foreground">{app.job?.company || 'Unknown Company'}</p>
+                          <p className="text-sm">Applied on {new Date(app.createdAt).toLocaleDateString()}</p>
+                          <Badge variant={app.status === 'pending' ? 'secondary' : 'default'} className="mt-2">
+                            {app.status || 'pending'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground py-8">
+                  No applications yet. Start applying to jobs to see them here.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="profile" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile Information</CardTitle>
+                <CardDescription>
+                  Update your personal information
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    value={profileForm?.name || ''}
+                    onChange={(e) => setProfileForm((prev: any) => ({ ...prev, name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={profileForm?.email || ''}
+                    onChange={(e) => setProfileForm((prev: any) => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    value={profileForm?.phone || ''}
+                    onChange={(e) => setProfileForm((prev: any) => ({ ...prev, phone: e.target.value }))}
+                  />
+                </div>
+                <Button onClick={saveProfile} disabled={savingProfile}>
+                  {savingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Save Profile
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Skills</CardTitle>
+                <CardDescription>
+                  Manage your skills for better job matches
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Add New Skill</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter a skill"
+                      value={newSkill}
+                      onChange={(e) => setNewSkill(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addCustomSkill()}
+                    />
+                    <Button onClick={addCustomSkill} size="sm">Add</Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Available Skills</Label>
+                  <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                    {availableSkills.map((skill) => (
+                      <Badge
+                        key={skill}
+                        variant={skillsForm?.includes(skill) ? 'default' : 'outline'}
+                        className="cursor-pointer"
+                        onClick={() => toggleSkill(skill)}
+                      >
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Your Selected Skills</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {skillsForm?.map((skill) => (
+                      <Badge key={skill} variant="secondary">
+                        {skill}
+                        <X
+                          className="ml-1 h-3 w-3 cursor-pointer"
+                          onClick={() => toggleSkill(skill)}
+                        />
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <Button onClick={saveSkills} disabled={savingSkills}>
+                  {savingSkills && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Save Skills
+                </Button>
+              </CardContent>
+            </Card>
           </div>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
+
+
 
 export default DashboardPage;

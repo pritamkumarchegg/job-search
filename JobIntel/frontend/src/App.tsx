@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
 import { MainLayout } from "./components/layout/MainLayout";
+import { DashboardLayout } from "./components/layout/DashboardLayout";
 import { AdminLayout } from "./components/admin/AdminLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import LandingPage from "./pages/LandingPage";
@@ -49,14 +50,20 @@ const AppContent = () => {
         <Route path="/jobs" element={<JobsPage />} />
         <Route path="/jobs/:id" element={<JobDetailPage />} />
         <Route path="/pricing" element={<PricingPage />} />
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute requiredRole="user">
-              <DashboardPage />
-            </ProtectedRoute>
-          } 
-        />
+      </Route>
+
+      {/* Dashboard pages with sidebar layout - for authenticated users */}
+      <Route
+        element={
+          <ProtectedRoute requiredRole="user">
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/jobs" element={<JobsPage />} />
+        <Route path="/jobs/:id" element={<JobDetailPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
       </Route>
 
       {/* Admin pages with admin layout - for admin users only */}
