@@ -1,0 +1,325 @@
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, MapPin, Building2, Eye, Search, Briefcase } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+interface Job {
+  _id: string;
+  title: string;
+  company?: string;
+  location?: string;
+  type?: string;
+  isRemote?: boolean;
+  salary?: string;
+  description?: string;
+  applyLink?: string;
+  applyUrl?: string;
+  source?: string;
+  ctc?: string;
+  meta?: { 
+    company?: string;
+    salary?: string;
+    ctc?: string;
+    applyUrl?: string;
+    applyLink?: string;
+  };
+  techStack?: string[];
+  batch?: string;
+  status?: string;
+}
+
+export default function AllJobsPage() {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedType, setSelectedType] = useState<string>('all');
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchAllJobs = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const fetchUrl = '/api/jobs?limit=1000';
+        console.log('🚀 [AllJobsPage] Starting fetch:', {
+          url: fetchUrl,
+          headers: Object.keys(headers),
+          timestamp: new Date().toISOString(),
+        });
+
+        const res = await fetch(fetchUrl, {
+          headers,
+          cache: 'no-store',
+        });
+
+        console.log('📡 [AllJobsPage] Response received:', {
+          status: res.status,
+          ok: res.ok,
+          contentType: res.headers.get('content-type'),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const jobsArray = Array.isArray(data) ? data : [];
+          
+          console.log('✅ [AllJobsPage] Jobs loaded successfully:', {
+            totalJobs: jobsArray.length,
+            firstJob: jobsArray[0],
+            lastJob: jobsArray[jobsArray.length - 1],
+            jobSources: Array.from(new Set(jobsArray.map((j: Job) => j.meta?.company || 'unknown'))),
+            statuses: Array.from(new Set(jobsArray.map((j: Job) => j.status || 'unknown'))),
+            applyLinksPresent: jobsArray.filter((j: Job) => j.applyUrl || j.applyLink || j.meta?.applyUrl || j.meta?.applyLink).length,
+            applyLinkSample: jobsArray[0]?.applyUrl || jobsArray[0]?.applyLink || jobsArray[0]?.meta?.applyUrl || jobsArray[0]?.meta?.applyLink,
+          });
+          
+          setJobs(jobsArray);
+          setFilteredJobs(jobsArray);
+        } else {
+          console.error('❌ [AllJobsPage] API returned error:', res.status);
+          setJobs([]);
+          setFilteredJobs([]);
+        }
+      } catch (err) {
+        console.error('❌ [AllJobsPage] Fetch error:', err);
+        toast({
+          title: 'Error',
+          description: 'Failed to load jobs',
+          variant: 'destructive',
+        });
+        setJobs([]);
+        setFilteredJobs([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllJobs();
+  }, [toast]);
+
+  // Filter jobs based on search and type
+  useEffect(() => {
+    let filtered = jobs;
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (job) =>
+          job.title.toLowerCase().includes(query) ||
+          job.company.toLowerCase().includes(query) ||
+          job.location.toLowerCase().includes(query)
+      );
+    }
+
+    // Type filter
+    if (selectedType !== 'all') {
+      filtered = filtered.filter((job) => (job.type || '').toLowerCase() === selectedType.toLowerCase());
+    }
+
+    setFilteredJobs(filtered);
+  }, [searchQuery, selectedType, jobs]);
+
+  const jobTypes = ['all', ...new Set(jobs.map((j) => j.type || 'Other'))];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-8 border border-border">
+        <h1 className="text-4xl font-bold mb-2">All Available Jobs</h1>
+        <p className="text-muted-foreground">Browse all {jobs.length} job opportunities from our database</p>
+      </div>
+
+      {/* Search and Filters */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search jobs by title, company, or location..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </div>
+
+            {/* Type Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Job Type</label>
+              <div className="flex flex-wrap gap-2">
+                {jobTypes.map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setSelectedType(type)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      selectedType === type
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                    }`}
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Results count */}
+            <div className="text-sm text-muted-foreground pt-2 border-t">
+              Showing {filteredJobs.length} of {jobs.length} jobs
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Jobs Grid */}
+      {filteredJobs.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-muted-foreground py-12">
+              No jobs found matching your criteria. Try adjusting your search.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {filteredJobs.map((job) => (
+            <Card key={job._id} className="hover:shadow-md transition-shadow overflow-hidden">
+              <CardContent className="pt-6">
+                <div className="flex items-start justify-between gap-4">
+                  {/* Job Info */}
+                  <div className="flex-1">
+                    <Link to={`/jobs/${job._id}`} className="group">
+                      <h3 className="text-lg font-semibold group-hover:text-primary transition-colors mb-1">
+                        {job.title}
+                      </h3>
+                    </Link>
+
+                    <div className="flex flex-col gap-2 mb-3">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+                        <div className="flex items-center gap-1">
+                          <Building2 className="h-4 w-4" />
+                          {job.company || job.meta?.company || 'Company'}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4" />
+                          {job.location || 'Location not specified'}
+                        </div>
+                      </div>
+
+                      {/* Salary and other details */}
+                      <div className="flex items-center gap-4 text-sm flex-wrap">
+                        {job.salary && (
+                          <div className="flex items-center gap-1 text-green-600 font-medium">
+                            <Briefcase className="h-4 w-4" />
+                            {job.salary}
+                          </div>
+                        )}
+                        {job.batch && (
+                          <div className="text-sm text-muted-foreground">
+                            Batch: {job.batch}
+                          </div>
+                        )}
+                        {job.status && (
+                          <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium text-foreground border-border capitalize">
+                            {job.status}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="flex gap-2 flex-wrap mb-3">
+                      {job.type && (
+                        <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary border-transparent">
+                          {job.type}
+                        </div>
+                      )}
+                      {job.isRemote && (
+                        <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium bg-info/15 text-info border-transparent">
+                          Remote
+                        </div>
+                      )}
+                      {job.techStack && job.techStack.length > 0 && (
+                        <div className="inline-flex items-center gap-1">
+                          {job.techStack.slice(0, 3).map((tech, idx) => (
+                            <div
+                              key={idx}
+                              className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium bg-accent/10 text-accent border-transparent"
+                            >
+                              {tech}
+                            </div>
+                          ))}
+                          {job.techStack.length > 3 && (
+                            <div className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border-transparent">
+                              +{job.techStack.length - 3}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Description preview */}
+                    {job.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {job.description.substring(0, 200)}...
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 flex-col">
+                    {(job.applyUrl || job.applyLink || job.meta?.applyUrl || job.meta?.applyLink) ? (
+                      <a
+                        href={job.applyUrl || job.applyLink || job.meta?.applyUrl || job.meta?.applyLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors text-sm"
+                      >
+                        <Briefcase className="h-4 w-4" />
+                        Apply Now
+                      </a>
+                    ) : (
+                      <button
+                        disabled
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-muted text-muted-foreground rounded-md font-medium text-sm cursor-not-allowed"
+                      >
+                        No Apply Link
+                      </button>
+                    )}
+                    <Link
+                      to={`/jobs/${job._id}`}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md font-medium hover:bg-secondary/90 transition-colors text-sm"
+                    >
+                      <Eye className="h-4 w-4" />
+                      View Details
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

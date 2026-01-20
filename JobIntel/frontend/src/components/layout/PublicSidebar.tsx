@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Briefcase, label: 'Browse Jobs', path: '/jobs' },
+  { icon: Briefcase, label: 'All Jobs', path: '/all-jobs' },
   { icon: FileText, label: 'My Applications', path: '/applications' },
   { icon: Bookmark, label: 'Saved Jobs', path: '/saved' },
   { icon: Bell, label: 'Notifications', path: '/notifications' },

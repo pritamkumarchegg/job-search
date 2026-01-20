@@ -36,6 +36,39 @@ export async function listApplications(req: Request, res: Response) {
   }
 }
 
+export async function updateApplication(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    
+    // Allow updating status and notes
+    const allowed = ['status', 'notes', 'appliedAt'];
+    const payload: any = {};
+    for (const key of allowed) {
+      if (key in updates) payload[key] = updates[key];
+    }
+
+    const app = await Application.findByIdAndUpdate(id, payload, { new: true }).lean();
+    if (!app) return res.status(404).json({ error: 'Application not found' });
+
+    try {
+      publishRealtime('realtime:applications', {
+        type: 'application_updated',
+        applicationId: app._id,
+        jobId: app.jobId,
+        userId: app.userId,
+        status: app.status,
+      });
+    } catch (e) {
+      console.warn('failed to publish application update event', e?.message || e);
+    }
+
+    return res.json(app);
+  } catch (err) {
+    return res.status(500).json({ error: "failed to update application", details: err });
+  }
+}
+
 export async function deleteApplication(req: Request, res: Response) {
   try {
     const app = await Application.findByIdAndDelete(req.params.id).lean();

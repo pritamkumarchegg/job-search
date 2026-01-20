@@ -208,7 +208,7 @@ const LandingPage = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <Badge variant="new" className="mb-2">Hot Jobs</Badge>
+              <Badge variant="new"><span>Hot Jobs</span></Badge>
               <h2 className="text-2xl md:text-3xl font-bold">Featured Opportunities</h2>
             </div>
             <Link to="/jobs">
@@ -238,13 +238,13 @@ const LandingPage = () => {
                         <p className="text-sm text-muted-foreground">{job.company.name}</p>
                       </div>
                     </div>
-                    {job.isHot && <Badge variant="hot">🔥 Hot</Badge>}
+                    {job.isHot && <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium bg-destructive/15 text-destructive border-transparent"><span>🔥 Hot</span></div>}
                   </div>
 
                   <div className="flex flex-wrap gap-2 mb-4">
-                    <Badge variant="fullTime">{job.type}</Badge>
-                    {job.isRemote && <Badge variant="remote">Remote</Badge>}
-                    <Badge variant="outline">{job.location}</Badge>
+                    <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary border-transparent"><span>{job.type}</span></div>
+                    {job.isRemote && <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium bg-info/15 text-info border-transparent"><span>Remote</span></div>}
+                    <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium text-foreground border-border"><span>{job.location}</span></div>
                   </div>
 
                   <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
@@ -270,11 +270,52 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Testimonials Section */}
+      {/* All Jobs Section */}
       <section className="py-20 bg-muted/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <Badge variant="secondary" className="mb-4">Testimonials</Badge>
+            <Badge variant="secondary" className="mb-4"><span>All Jobs</span></Badge>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Browse All Available Opportunities
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Explore our complete database of 400+ job listings with detailed information about companies, roles, and requirements.
+            </p>
+          </div>
+
+          <div className="text-center">
+            <Link to="/all-jobs">
+              <Button size="lg" className="bg-gradient-to-r from-primary to-accent hover:opacity-90">
+                View All Jobs
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
+
+          <div className="mt-12 text-center">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="bg-card rounded-xl p-6 border border-border">
+                <div className="text-4xl font-bold text-primary mb-2">400+</div>
+                <p className="text-muted-foreground">Active Job Listings</p>
+              </div>
+              <div className="bg-card rounded-xl p-6 border border-border">
+                <div className="text-4xl font-bold text-accent mb-2">100+</div>
+                <p className="text-muted-foreground">Partner Companies</p>
+              </div>
+              <div className="bg-card rounded-xl p-6 border border-border">
+                <div className="text-4xl font-bold text-primary mb-2">Multiple</div>
+                <p className="text-muted-foreground">Roles & Locations</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <Badge variant="secondary" className="mb-4"><span>Testimonials</span></Badge>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Loved by Job Seekers
             </h2>

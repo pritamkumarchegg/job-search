@@ -24,6 +24,8 @@ import applicationRoutes from './routes/application';
 import seoRoutes from './routes/seo';
 import openapiRoutes from './routes/openapi';
 import notificationRoutes from './routes/notification';
+import notificationCrudRoutes from './routes/notificationCrud';
+import messageCrudRoutes from './routes/messageCrud';
 import paymentsRoutes from './routes/payments';
 import aiRoutes from './routes/ai';
 import adminRoutes from './routes/admin';
@@ -224,6 +226,8 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/profile-fields', profileFieldsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/jsearch', jsearchRoutes);
+app.use('/api/notifications', notificationCrudRoutes);
+app.use('/api/messages', messageCrudRoutes);
 
 // ========================================
 // PHASE 1: Admin Initialization

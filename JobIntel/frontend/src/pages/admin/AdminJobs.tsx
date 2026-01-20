@@ -76,6 +76,8 @@ export default function AdminJobs() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [sourceFilter, setSourceFilter] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const jobsPerPage = 15;
   const [rawJobText, setRawJobText] = useState('');
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -379,6 +381,16 @@ export default function AdminJobs() {
       return matchesSearch && matchesStatus && matchesSource;
     }
   );
+
+  // Pagination
+  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
+  const startIdx = (currentPage - 1) * jobsPerPage;
+  const paginatedJobs = filteredJobs.slice(startIdx, startIdx + jobsPerPage);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, sourceFilter]);
 
   const handleAiParse = async () => {
     setError(null);
@@ -793,7 +805,7 @@ export default function AdminJobs() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredJobs.map((job) => (
+                {paginatedJobs.map((job) => (
                   <TableRow key={job.id}>
                     <TableCell className="font-medium">{job.title}</TableCell>
                     <TableCell className="font-semibold">{job.company || 'Unknown'}</TableCell>
@@ -873,8 +885,43 @@ export default function AdminJobs() {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination Info */}
+          <div className="p-4 border-t text-sm text-muted-foreground">
+            Showing {paginatedJobs.length} of {filteredJobs.length} jobs
+            {filteredJobs.length !== combinedJobs.length && ` (filtered from ${combinedJobs.length})`}
+          </div>
         </CardContent>
       </Card>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                ← Previous
+              </Button>
+
+              <div className="text-sm">
+                Page {currentPage} of {totalPages}
+              </div>
+
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next →
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Job Preview Dialog */}
       <JobPreviewDialog

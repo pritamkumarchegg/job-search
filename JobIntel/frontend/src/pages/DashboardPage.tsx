@@ -38,13 +38,14 @@ import {
   Activity,
   Award,
   X,
+  LogOut,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const DashboardPage = () => {
   console.log('🔍 [DashboardPage] Component rendered/updated');
 
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, logout } = useAuthStore();
   console.log('🔍 [DashboardPage] Auth state:', { isAuthenticated, user: user ? { id: user.id, name: user.name, email: user.email, tier: user.tier } : null });
 
   if (!isAuthenticated || !user) {
@@ -93,6 +94,11 @@ const DashboardPage = () => {
   const [savingSkills, setSavingSkills] = useState(false);
   const [newSkill, setNewSkill] = useState('');
 
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/login';
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'interview':
@@ -127,7 +133,18 @@ const DashboardPage = () => {
         const url = base ? `${base}/api/jobs?status=active` : '/api/jobs?status=active';
         console.log('🔍 [DashboardPage] Fetching jobs from URL:', url);
 
-        const res = await fetch(url, { cache: 'no-store' });
+        const token = localStorage.getItem('token');
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const res = await fetch(url, { 
+          cache: 'no-store',
+          headers,
+        });
         console.log('🔍 [DashboardPage] Jobs API response status:', res.status);
 
         if (!res.ok) {
@@ -176,7 +193,18 @@ const DashboardPage = () => {
         const url = base ? `${base}/api/applications?userId=${user.id}` : `/api/applications?userId=${user.id}`;
         console.log('🔍 [DashboardPage] Fetching applications from URL:', url);
 
-        const res = await fetch(url, { cache: 'no-store' });
+        const token = localStorage.getItem('token');
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const res = await fetch(url, { 
+          cache: 'no-store',
+          headers,
+        });
         console.log('🔍 [DashboardPage] Applications API response status:', res.status);
 
         if (!res.ok) {
@@ -234,7 +262,18 @@ const DashboardPage = () => {
         const url = base ? `${base}/api/skills` : '/api/skills';
         console.log('🔍 [DashboardPage] Fetching skills from URL:', url);
 
-        const res = await fetch(url, { cache: 'no-store' });
+        const token = localStorage.getItem('token');
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const res = await fetch(url, { 
+          cache: 'no-store',
+          headers,
+        });
         console.log('🔍 [DashboardPage] Skills API response status:', res.status);
 
         if (!res.ok) {
@@ -417,6 +456,14 @@ const DashboardPage = () => {
             Welcome back, {user?.name || 'User'}! Here's your job search overview.
           </p>
         </div>
+        <Button
+          variant="destructive"
+          onClick={handleLogout}
+          className="gap-2"
+        >
+          <LogOut className="h-4 w-4" />
+          Logout
+        </Button>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">

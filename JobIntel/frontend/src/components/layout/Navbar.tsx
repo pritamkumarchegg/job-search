@@ -30,8 +30,9 @@ export const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   const navLinks = [
-    { path: '/jobs', label: 'Browse Jobs', icon: Briefcase },
-    { path: '/pricing', label: 'Pricing', icon: Crown },
+     { path: '/jobs', label: 'Browse Jobs', icon: Briefcase },
+     { path: '/all-jobs', label: 'All Jobs', icon: Briefcase },
+     { path: '/pricing', label: 'Pricing', icon: Crown },
   ];
 
   const getTierBadge = () => {

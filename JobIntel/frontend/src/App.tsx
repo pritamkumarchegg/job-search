@@ -14,6 +14,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import JobsPage from "./pages/JobsPage";
 import JobDetailPage from "./pages/JobDetailPage";
+import AllJobsPage from "./pages/AllJobsPage";
 import PricingPage from "./pages/PricingPage";
 import DashboardPage from "./pages/DashboardPage";
 import ApplicationsPage from "./pages/ApplicationsPage";
@@ -50,9 +51,11 @@ const AppContent = () => {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       
-      {/* Main pages with layout - for regular users */}
+      {/* Main pages with layout - for regular users and public */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/all-jobs" element={<AllJobsPage />} />
+        <Route path="/jobs/:id" element={<JobDetailPage />} />
         <Route path="/pricing" element={<PricingPage />} />
       </Route>
 
@@ -66,13 +69,11 @@ const AppContent = () => {
       >
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/jobs" element={<JobsPage />} />
-        <Route path="/jobs/:id" element={<JobDetailPage />} />
         <Route path="/applications" element={<ApplicationsPage />} />
         <Route path="/saved" element={<SavedJobsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/messages" element={<MessagesPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
 

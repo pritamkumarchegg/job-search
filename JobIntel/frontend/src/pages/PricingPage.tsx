@@ -153,8 +153,10 @@ const PricingPage = () => {
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
           <Badge variant="secondary" className="mb-4">
-            <Crown className="h-3 w-3 mr-1" />
-            Pricing Plans
+            <span className="flex items-center gap-1">
+              <Crown className="h-3 w-3" />
+              Pricing Plans
+            </span>
           </Badge>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Choose Your Path to

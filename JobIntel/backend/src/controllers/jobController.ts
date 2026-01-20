@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Job } from "../models/Job";
 import { Company } from "../models/Company";
 import { Revenue } from "../models/Revenue";
+import SavedJob from "../models/SavedJob";
 import { enqueueNotification } from "../queues/notificationQueue";
 import { publishRealtime } from "../utils/realtime";
 
@@ -241,8 +242,21 @@ export async function getJob(req: Request, res: Response) {
   try {
     const job = await Job.findById(req.params.id).lean();
     if (!job) return res.status(404).json({ error: "not found" });
+    
+    // Debug logging
+    console.log('🔍 [getJob] Job retrieved:', {
+      jobId: job._id,
+      title: job.title,
+      metaCompany: job.meta?.company,
+      allMeta: job.meta,
+      applyUrl: job.applyUrl,
+      description: (job.description || '').substring(0, 100),
+      source: job.source,
+    });
+    
     return res.json(job);
   } catch (err) {
+    console.error('❌ [getJob] Error:', err);
     return res.status(500).json({ error: "failed to get job", details: err });
   }
 }
@@ -304,11 +318,53 @@ export async function deleteJob(req: Request, res: Response) {
 export async function listJobs(req: Request, res: Response) {
   try {
     const q: any = {};
-    if (req.query.status) q.status = req.query.status;
-    const jobs = await Job.find(q).limit(100).lean();
+    const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+    // allow 'all' to mean no status filter
+    if (status && status !== 'all') q.status = status;
+
+    // support client-side limit param, with sane defaults and caps
+    const requestedLimit = parseInt((req.query.limit as string) || '0', 10) || 0;
+    const limit = requestedLimit > 0 ? Math.min(requestedLimit, 5000) : 1000;
+
+    console.log('🔍 [listJobs] Query initiated:', {
+      queryParams: req.query,
+      mongoQuery: q,
+      limit,
+      status,
+      requestedLimit,
+    });
+
+    // Get total count before filtering for reference
+    const totalCount = await Job.estimatedDocumentCount();
+    
+    // Basic query - newest first
+    const jobs = await Job.find(q).sort({ createdAt: -1 }).limit(limit).lean();
+    
+    console.log('✅ [listJobs] Query completed:', {
+      totalJobsInDB: totalCount,
+      queryApplied: q,
+      jobsReturned: jobs.length,
+      limit,
+      firstJobId: jobs[0]?._id,
+      lastJobId: jobs[jobs.length - 1]?._id,
+      jobSources: Array.from(new Set(jobs.map((j: any) => j.source || 'unknown'))),
+      jobStatuses: Array.from(new Set(jobs.map((j: any) => j.status || 'unknown'))),
+    });
+
     return res.json(jobs);
   } catch (err) {
+    console.error('❌ [listJobs] Error:', err);
     return res.status(500).json({ error: "failed to list jobs", details: err });
+  }
+}
+
+// Return total jobs count
+export async function getJobsCount(req: Request, res: Response) {
+  try {
+    const count = await Job.estimatedDocumentCount();
+    return res.json({ count });
+  } catch (err) {
+    return res.status(500).json({ error: "failed to get jobs count", details: err });
   }
 }
 
@@ -334,5 +390,90 @@ export async function ingestJob(req: Request, res: Response) {
     return res.status(201).json(job);
   } catch (err) {
     return res.status(500).json({ error: "ingest failed", details: err });
+  }
+}
+
+// Save a job for the user
+export async function saveJob(req: Request, res: Response) {
+  try {
+    const userId = (req as any).user?._id;
+    const jobId = req.params.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    // Check if job exists
+    const job = await Job.findById(jobId);
+    if (!job) {
+      return res.status(404).json({ error: "Job not found" });
+    }
+
+    // Check if already saved
+    const existing = await SavedJob.findOne({ userId, jobId });
+    if (existing) {
+      return res.status(400).json({ error: "Job already saved" });
+    }
+
+    // Create saved job record
+    const savedJob = await SavedJob.create({ userId, jobId });
+
+    return res.status(201).json({ success: true, savedJob });
+  } catch (err: any) {
+    console.error("saveJob error", err);
+    return res.status(500).json({ error: err?.message || "failed to save job" });
+  }
+}
+
+// Unsave a job for the user
+export async function unsaveJob(req: Request, res: Response) {
+  try {
+    const userId = (req as any).user?._id;
+    const jobId = req.params.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    // Delete the saved job record
+    const result = await SavedJob.findOneAndDelete({ userId, jobId });
+
+    if (!result) {
+      return res.status(404).json({ error: "Saved job not found" });
+    }
+
+    return res.json({ success: true });
+  } catch (err: any) {
+    console.error("unsaveJob error", err);
+    return res.status(500).json({ error: err?.message || "failed to unsave job" });
+  }
+}
+
+// Get saved jobs for the user
+export async function getSavedJobs(req: Request, res: Response) {
+  try {
+    const userId = req.params.userId;
+    const authUserId = (req as any).user?._id;
+
+    if (!authUserId || authUserId.toString() !== userId.toString()) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    // Get all saved jobs with job details
+    const savedJobs = await SavedJob.find({ userId })
+      .populate("jobId")
+      .sort({ savedAt: -1 });
+
+    // Extract just the job details for the response
+    const jobs = savedJobs.map((saved) => ({
+      _id: saved._id,
+      ...saved.jobId,
+      savedAt: saved.savedAt,
+    }));
+
+    return res.json(jobs);
+  } catch (err: any) {
+    console.error("getSavedJobs error", err);
+    return res.status(500).json({ error: err?.message || "failed to get saved jobs" });
   }
 }

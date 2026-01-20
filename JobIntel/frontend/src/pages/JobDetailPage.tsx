@@ -129,35 +129,56 @@ const JobDetailPage = () => {
         const res = await fetch(`/api/jobs/${id}`);
         if (res.ok) {
           const bj = await res.json();
+          
+          // Debug logging
+          console.log('🔍 [JobDetailPage] Job data fetched from backend:', {
+            jobId: bj._id,
+            title: bj.title,
+            metaRawDataEmployer: bj.meta?.rawData?.employer_name,
+            applyUrl: bj.applyUrl,
+            description: (bj.description || '').substring(0, 100),
+            source: bj.source,
+          });
+          
+          // Extract company name from multiple possible locations
+          const companyName = 
+            bj.meta?.rawData?.employer_name ||
+            bj.company || 
+            bj.meta?.company || 
+            bj.meta?.companyName ||
+            bj.companyName ||
+            'Unknown Company';
+            
+          console.log('✅ [JobDetailPage] Resolved company name:', companyName);
+          
           setJobData({
             id: bj._id,
             title: bj.title,
             company: {
-              name: bj.meta?.company || 'Company',
-              logo: undefined,
-              description: bj.meta?.companyDescription || '',
-              website: bj.meta?.companyUrl || '',
+              name: companyName,
+              logo: bj.meta?.rawData?.employer_logo,
+              description: bj.meta?.rawData?.employer_website || bj.meta?.companyDescription || '',
+              website: bj.meta?.rawData?.employer_website || bj.meta?.companyUrl || '',
               industry: 'Technology',
             },
-            location: bj.meta?.location || bj.location || 'Remote',
-            isRemote: bj.meta?.isRemote ?? false,
-            type: 'full-time',
+            location: bj.location || 'Remote',
+            isRemote: bj.meta?.rawData?.job_employment_type?.toLowerCase().includes('remote') ?? false,
+            type: bj.meta?.rawData?.job_employment_type || 'full-time',
             experienceLevel: 'fresher',
             experienceRange: { min: 0, max: 3 },
-            salary: bj.meta?.salary ? parseSalaryString(bj.meta.salary) : undefined,
-            description: bj.description || bj.rawHtml || 'No description available',
+            salary: bj.ctc ? parseSalaryString(bj.ctc) : undefined,
+            description: bj.description || bj.rawHtml || bj.rawText || 'No description available',
             requirements: [],
             skills: bj.meta?.techStack || [],
-            batch: bj.meta?.batch,
-            applyLink: bj.meta?.applyLink || bj.applyUrl || '#',
-            // keep applied state fetched from backend separately in JobsPage; JobDetail can also expose apply action later
+            batch: bj.batch,
+            applyLink: bj.applyUrl || bj.meta?.externalLink || bj.meta?.applyUrl || '#',
             postedAt: bj.createdAt,
             applicantsCount: bj.applicantsCount || 0,
             deadline: bj.deadline || undefined,
           });
         }
       } catch (err) {
-        console.warn('Failed to fetch job details from backend:', err);
+        console.error('❌ [JobDetailPage] Failed to fetch job details from backend:', err);
       } finally {
         setLoading(false);
       }
