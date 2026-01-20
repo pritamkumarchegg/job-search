@@ -755,7 +755,9 @@ export default function AdminJobs() {
                 <option value="">All Status</option>
                 <option value="pending">Pending</option>
                 <option value="active">Active</option>
+                <option value="published">Published</option>
                 <option value="rejected">Rejected</option>
+                <option value="expired">Expired</option>
               </select>
               {/* Source Dropdown */}
               <select
@@ -764,9 +766,9 @@ export default function AdminJobs() {
                 className="px-3 py-1 rounded-md border border-input bg-background text-sm hover:bg-muted cursor-pointer"
               >
                 <option value="">All Sources</option>
+                <option value="JSearch API">JSearch API</option>
                 <option value="manual">Manual</option>
                 <option value="crawler">Crawler</option>
-                <option value="api">API</option>
               </select>
               {(statusFilter || sourceFilter) && (
                 <Button 

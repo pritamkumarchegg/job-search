@@ -43,8 +43,7 @@ export default function AllJobsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [selectedSource, setSelectedSource] = useState<string>('all');
+  const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([]);
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const { toast } = useToast();
@@ -95,8 +94,8 @@ export default function AllJobsPage() {
     () => [...new Set(allJobs.map((j) => j.source || 'Unknown'))].filter(Boolean).sort(),
     [allJobs]
   );
-  const statuses = useMemo(
-    () => [...new Set(allJobs.map((j) => j.status || 'Unknown'))].filter(Boolean).sort(),
+  const jobTypes = useMemo(
+    () => [...new Set(allJobs.map((j) => j.meta?.rawData?.job_employment_type || 'Unknown'))].filter(Boolean).sort(),
     [allJobs]
   );
 
@@ -129,14 +128,11 @@ export default function AllJobsPage() {
       );
     }
 
-    // Status filter
-    if (selectedStatus !== 'all') {
-      filtered = filtered.filter((job) => (job.status || 'Unknown') === selectedStatus);
-    }
-
-    // Source filter
-    if (selectedSource !== 'all') {
-      filtered = filtered.filter((job) => (job.source || 'Unknown') === selectedSource);
+    // Job Type filter
+    if (selectedJobTypes.length > 0) {
+      filtered = filtered.filter((job) =>
+        selectedJobTypes.includes(job.meta?.rawData?.job_employment_type || 'Unknown')
+      );
     }
 
     // Remote filter
@@ -147,7 +143,7 @@ export default function AllJobsPage() {
     }
 
     return filtered;
-  }, [allJobs, searchQuery, selectedCompanies, selectedLocations, selectedStatus, selectedSource, remoteOnly]);
+  }, [allJobs, searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, remoteOnly]);
 
   // Pagination
   const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
@@ -157,14 +153,13 @@ export default function AllJobsPage() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCompanies, selectedLocations, selectedStatus, selectedSource, remoteOnly]);
+  }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, remoteOnly]);
 
   const resetFilters = () => {
     setSearchQuery('');
     setSelectedCompanies([]);
     setSelectedLocations([]);
-    setSelectedStatus('all');
-    setSelectedSource('all');
+    setSelectedJobTypes([]);
     setRemoteOnly(false);
     setCurrentPage(1);
   };
@@ -265,38 +260,30 @@ export default function AllJobsPage() {
 
                 {/* Status and Source Filters */}
                 <div className="space-y-3">
-                  <Label className="font-semibold">Status</Label>
-                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      {statuses.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Label className="font-semibold mt-4">Source</Label>
-                  <Select value={selectedSource} onValueChange={setSelectedSource}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Sources</SelectItem>
-                      {sources.map((source) => (
-                        <SelectItem key={source} value={source}>
-                          {source}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label className="font-semibold">Job Type ({selectedJobTypes.length})</Label>
+                  <div className="max-h-40 overflow-y-auto space-y-2">
+                    {jobTypes.map((type) => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`jobtype-${type}`}
+                          checked={selectedJobTypes.includes(type)}
+                          onCheckedChange={(checked) => {
+                            setSelectedJobTypes(
+                              checked
+                                ? [...selectedJobTypes, type]
+                                : selectedJobTypes.filter((t) => t !== type)
+                            );
+                          }}
+                        />
+                        <Label htmlFor={`jobtype-${type}`} className="text-sm cursor-pointer capitalize">
+                          {type}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
 
                   {/* Remote Only */}
-                  <div className="flex items-center space-x-2 pt-4">
+                  <div className="flex items-center space-x-2 pt-4 border-t">
                     <Checkbox
                       id="remote-only"
                       checked={remoteOnly}
@@ -316,7 +303,7 @@ export default function AllJobsPage() {
                 Showing {paginatedJobs.length} of {filteredJobs.length} jobs
                 {filteredJobs.length !== allJobs.length && ` (filtered from ${allJobs.length})`}
               </div>
-              {(searchQuery || selectedCompanies.length > 0 || selectedLocations.length > 0 || selectedStatus !== 'all' || selectedSource !== 'all' || remoteOnly) && (
+              {(searchQuery || selectedCompanies.length > 0 || selectedLocations.length > 0 || selectedJobTypes.length > 0 || remoteOnly) && (
                 <Button variant="ghost" size="sm" onClick={resetFilters}>
                   <X className="h-4 w-4 mr-1" />
                   Reset Filters
@@ -364,18 +351,13 @@ export default function AllJobsPage() {
 
                       {/* Meta Info */}
                       <div className="flex items-center gap-4 text-sm flex-wrap">
-                        {job.source && (
-                          <Badge variant="outline" className="text-xs">
-                            {job.source}
-                          </Badge>
-                        )}
                         {job.status && (
                           <Badge className="text-xs capitalize">
                             {job.status}
                           </Badge>
                         )}
                         {job.meta?.rawData?.job_employment_type && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-xs capitalize">
                             {job.meta.rawData.job_employment_type}
                           </Badge>
                         )}
