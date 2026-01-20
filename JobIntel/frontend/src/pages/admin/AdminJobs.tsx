@@ -767,6 +767,7 @@ export default function AdminJobs() {
               >
                 <option value="">All Sources</option>
                 <option value="JSearch API">JSearch API</option>
+                <option value="Fallback Data">Fallback Data</option>
                 <option value="manual">Manual</option>
                 <option value="crawler">Crawler</option>
               </select>
