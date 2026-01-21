@@ -1,11 +1,12 @@
 import { logger } from '../utils/logger';
 import fs from 'fs';
 import path from 'path';
-import * as pdfParseModule from 'pdf-parse';
+import * as pdfjs from 'pdfjs-dist';
 import { Document } from 'docx';
 import { readFile } from 'xlsx';
 
-const pdfParse = (pdfParseModule as any).default || pdfParseModule;
+// Set the worker path for pdfjs
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface ParsedResumeData {
   text: string;
@@ -89,11 +90,22 @@ class ResumeParserService {
   private async extractPdfText(filePath: string): Promise<string> {
     try {
       const fileBuffer = fs.readFileSync(filePath);
-      const pdfData = await pdfParse(fileBuffer);
-      return pdfData.text;
+      const pdf = await pdfjs.getDocument({ data: fileBuffer }).promise;
+      let text = '';
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items
+          .map((item: any) => item.str)
+          .join(' ');
+        text += pageText + '\n';
+      }
+
+      return text;
     } catch (error) {
       logger.error(`Error parsing PDF: ${error}`, { filePath });
-      throw error;
+      throw new Error(`Failed to parse PDF: ${(error as any).message}`);
     }
   }
 
