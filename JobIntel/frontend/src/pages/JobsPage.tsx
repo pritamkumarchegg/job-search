@@ -177,6 +177,7 @@ const JobsPage = () => {
       id: bj._id,
       title: bj.title,
       company: {
+        id: bj.companyId || 'unknown',
         name: bj.meta?.company || (bj.company && bj.company.name) || 'Company',
         logo: undefined,
         description: '',
@@ -195,6 +196,7 @@ const JobsPage = () => {
       batch: bj.meta?.batch,
       applyLink: bj.meta?.applyLink || bj.applyUrl || '#',
       postedAt: bj.createdAt,
+      status: (bj.status as any) || 'active',
     })) as Job[];
 
     console.debug('[allJobs] Backend jobs loaded:', convertedBackendJobs.length, 'hasBackendLoaded:', hasBackendLoaded);

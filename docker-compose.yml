@@ -53,11 +53,13 @@ services:
     build:
       context: ./JobIntel/frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://jobintel-backend:5000
     container_name: jobintel-frontend
     ports:
       - "8080:8080"
     environment:
-      VITE_API_URL: http://localhost:5000
+      VITE_API_URL: http://jobintel-backend:5000
     depends_on:
       - backend
     networks:

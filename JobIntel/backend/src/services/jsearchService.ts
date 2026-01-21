@@ -20,6 +20,7 @@ export interface JobSearchParams {
   numPages?: number;
   pageSize?: number;
   page?: number;
+  filterIndianJobs?: boolean;  // Whether to filter for Indian jobs only
 }
 
 export interface ParsedJob {
@@ -148,20 +149,26 @@ class JSearchService {
 
       const jobs: ParsedJob[] = [];
 
-      // If no API key, fall back to simulated data
+      // If no API key, return empty array (NO FALLBACK)
       if (!this.apiKey) {
         logger.error('❌ CRITICAL: No API key found in environment variables!');
         logger.error('   Checked: OPENWEBNINJA_API_KEY, API_KEY');
-        logger.warn('📊 Using fallback simulated data (no API key configured)');
-        return this.generateFallbackJobs(params);
+        logger.error('❌ Cannot proceed without API key - NO FALLBACK DATA');
+        return [];
       }
 
-      // Multi-page scraping support (default: up to 5 pages, can be increased to 20-100)
-      const numPages = params.numPages || 5;
+      // Multi-page scraping support: Search up to 100 pages automatically
+      const numPages = params.numPages || 100;  // Default to 100 pages for comprehensive search
       const pageSize = params.pageSize || 50;
       
       logger.info(`📄 Fetching up to ${numPages} pages with ${pageSize} jobs per page`);
-      logger.info(`🇮🇳 Indian Job Filter Enabled: YES - Will only keep jobs from India`);
+      const shouldFilterIndian = params.filterIndianJobs !== false;  // Default to true
+      if (shouldFilterIndian) {
+        logger.info(`🇮🇳 Indian Job Filter Enabled: YES - Will only keep jobs from India`);
+      } else {
+        logger.info(`🌍 Country Filter: NO - Accepting jobs from all countries (USA, UK, Canada, etc.)`);
+      }
+      logger.info(`🔄 Auto-pagination enabled - Will continue until 100 pages or no results found`);
 
       for (let page = 1; page <= numPages; page++) {
         try {
@@ -191,28 +198,39 @@ class JSearchService {
 
             if (apiJobs.length === 0) {
               logger.info(`✅ No more jobs found on page ${page}, stopping pagination`);
+              logger.info(`📊 Total pages searched: ${page - 1}`);
               break;
             }
 
-            let indianJobsCount = 0;
+            let acceptedJobsCount = 0;
             for (const job of apiJobs) {
               const parsed = this.parseJobData(job);
               if (parsed) {
                 // DEBUG: Log every job location
                 logger.debug(`   Job: "${parsed.title}" | Location: "${parsed.location}" | City: "${parsed.city}" | State: "${parsed.state}" | Country: "${parsed.country}"`);
                 
-                // Filter to only Indian jobs
-                if (isIndianLocation(parsed.location, parsed.city, parsed.state, parsed.country)) {
-                  jobs.push(parsed);
-                  indianJobsCount++;
-                  logger.debug(`   ✅ ACCEPTED Indian job: ${parsed.title} at ${parsed.company} (${parsed.location})`);
+                // Apply location filter if enabled
+                const shouldFilterIndian = params.filterIndianJobs !== false;
+                if (shouldFilterIndian) {
+                  // Filter to only Indian jobs
+                  if (isIndianLocation(parsed.location, parsed.city, parsed.state, parsed.country)) {
+                    jobs.push(parsed);
+                    acceptedJobsCount++;
+                    logger.debug(`   ✅ ACCEPTED Indian job: ${parsed.title} at ${parsed.company} (${parsed.location})`);
+                  } else {
+                    logger.debug(`   ❌ REJECTED non-Indian: ${parsed.title} (${parsed.location})`);
+                  }
                 } else {
-                  logger.debug(`   ❌ REJECTED non-Indian: ${parsed.title} (${parsed.location})`);
+                  // Accept all jobs from any country
+                  jobs.push(parsed);
+                  acceptedJobsCount++;
+                  logger.debug(`   ✅ ACCEPTED ${parsed.country || 'Unknown'} job: ${parsed.title} at ${parsed.company} (${parsed.location})`);
                 }
               }
             }
 
-            logger.info(`✅ Page ${page}: Found ${apiJobs.length} jobs, kept ${indianJobsCount} Indian (Total: ${jobs.length})`);
+            const filterStatus = params.filterIndianJobs !== false ? 'Indian' : 'from all countries';
+            logger.info(`✅ Page ${page}: Found ${apiJobs.length} jobs, kept ${acceptedJobsCount} ${filterStatus} (Total: ${jobs.length})`);
 
             // Rate limiting between pages
             await this.delay(this.requestDelay * 2);
@@ -222,30 +240,38 @@ class JSearchService {
           }
         } catch (pageError: any) {
           logger.warn(`⚠️  Error fetching page ${page}: ${pageError?.message || pageError}`);
-          if (page === 1) {
-            // If first page fails, fall back to simulated data
-            logger.warn('⚠️  First page failed, using fallback data');
-            return this.generateFallbackJobs(params);
-          }
-          // For subsequent pages, just stop pagination
-          break;
+          // Continue to next page instead of stopping
+          logger.info(`🔄 Continuing to next page...`);
+          await this.delay(this.requestDelay * 3); // Longer delay after error
+          continue;
         }
       }
 
+      // Return jobs from API (NO FALLBACK)
+      logger.info(`✅ Scraping completed! Total Indian jobs found: ${jobs.length}`);
+      logger.info(`✅ Source: Real JSearch API data (100% REAL - NO FALLBACK)`);
+      
       if (jobs.length === 0) {
-        logger.warn('⚠️  No Indian jobs returned from API, using fallback data');
-        return this.generateFallbackJobs(params);
+        const filterType = params.filterIndianJobs !== false ? 'Indian' : 'global';
+        logger.warn(`⚠️  No ${filterType} jobs found after searching up to 100 pages`);
+        logger.warn('💡 This may indicate:');
+        if (params.filterIndianJobs !== false) {
+          logger.warn('   1. No Indian jobs available for this search term');
+          logger.warn('   2. Try different keywords (e.g., "software engineer India")');
+        } else {
+          logger.warn('   1. No jobs available for this search term');
+          logger.warn('   2. Try different keywords');
+        }
+        logger.warn('   3. Check API rate limits or connectivity');
+        logger.error('❌ Zero results - returning empty array (NO FALLBACK DATA)');
       }
-
-      logger.info(`✅ Successfully scraped ${jobs.length} Indian jobs from JSearch API`);
-      logger.info(`✅ Source: Real JSearch API data (NOT FALLBACK)`);
+      
       return jobs;
     } catch (error: any) {
       logger.error(`❌ Error searching jobs: ${error?.message || error}`);
       if (error?.stack) logger.error(`Error stack: ${error.stack}`);
-      // Fallback to simulated data on error
-      logger.warn('⚠️  Falling back to simulated data due to API error');
-      return this.generateFallbackJobs(params);
+      logger.error('❌ API Error - returning empty array (NO FALLBACK DATA)');
+      return [];
     }
   }
 

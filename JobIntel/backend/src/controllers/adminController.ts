@@ -448,6 +448,7 @@ export async function runCrawlers(req: AuthRequest, res: Response) {
               country: filterIndianJobs ? country : 'US',
               numPages: 10,  // Comprehensive scraping: 500+ jobs per bucket
               pageSize: 50,  // 50 jobs per page
+              filterIndianJobs,  // Pass the filter parameter to service
             });
 
             if (!jobs || jobs.length === 0) {
@@ -655,42 +656,53 @@ async function saveJobsToDatabase(
   let newCount = 0;
   let updatedCount = 0;
 
+  log(`💾 Starting to save ${jobs.length} jobs to database...`);
+
   for (const jobData of jobs) {
     try {
-      // Create unique identifier
-      const jobIdentifier = {
-        title: jobData.title,
-        company: jobData.company,
-        location: jobData.location,
+      // Build the job object with all required fields
+      const jobObject = {
+        title: jobData.title || 'Untitled',
+        location: jobData.location || 'Remote',
+        description: jobData.description || '',
+        requirements: jobData.requirements || [],
+        responsibilities: jobData.responsibilities || [],
+        applyUrl: jobData.applyUrl || '',
+        ctc: jobData.ctc || '',
+        employmentType: jobData.jobType || 'Full-time',
+        source: jobData.source || 'JSearch API',
+        status: jobData.status || 'published',
+        meta: {
+          company: jobData.company || 'Unknown',
+          salary: jobData.salary || '',
+          sessionId,
+          bucket,
+          ...(jobData.meta || {}),
+        },
       };
 
-      // Check if job already exists
-      const existingJob = await Job.findOne(jobIdentifier);
+      // Try to find existing job by title + location
+      const existingJob = await Job.findOne({
+        title: jobData.title,
+        location: jobData.location,
+      });
 
       if (existingJob) {
         // Update existing job
-        await Job.findByIdAndUpdate(
+        const updatedJob = await Job.findByIdAndUpdate(
           existingJob._id,
-          {
-            ...jobData,
-            sessionId,
-            bucket,
-            updatedAt: new Date(),
-          },
-          { new: true }
+          jobObject,
+          { new: true, runValidators: true }
         );
-        updatedCount++;
+        if (updatedJob) {
+          log(`🔄 Updated job: ${jobData.title} (${jobData.company})`);
+          updatedCount++;
+        }
       } else {
-        // Create new job
-        await Job.create({
-          ...jobData,
-          sessionId,
-          bucket,
-          source: jobData.source || 'JSearch API',
-          status: 'published',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
+        // Create new job - ensure all fields are set
+        const newJob = new Job(jobObject);
+        const savedJob = await newJob.save();
+        log(`✅ Saved job: ${jobData.title} (${jobData.company}) - ID: ${savedJob._id}`);
         newCount++;
       }
     } catch (error) {
@@ -730,7 +742,7 @@ async function verifyScrapedJobsInDatabase(
     const AuditLog = require('../models/AuditLog').default;
     await AuditLog.create({
       actor,
-      action: 'scrape_verified',
+      action: 'scrape_completed',
       meta: {
         sessionId,
         expectedCount,

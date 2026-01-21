@@ -227,3 +227,67 @@ export async function verifyToken(req: AuthRequest, res: Response) {
     return res.status(500).json({ error: 'Token verification failed' });
   }
 }
+
+export async function updateProfile(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.userId || (req.user as any)?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const {
+      name,
+      phone,
+      phoneNumber,
+      whatsappNumber,
+      telegramId,
+      telegramUsername,
+      location,
+      bio,
+      skills,
+      notificationPrefs,
+    } = req.body;
+
+    const updateData: any = {};
+    if (name !== undefined) updateData.name = name;
+    if (phone !== undefined) updateData.phone = phone;
+    if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
+    if (whatsappNumber !== undefined) updateData.whatsappNumber = whatsappNumber;
+    if (telegramId !== undefined) updateData.telegramId = telegramId;
+    if (telegramUsername !== undefined) updateData.telegramUsername = telegramUsername;
+    if (location !== undefined) updateData.location = location;
+    if (bio !== undefined) updateData.bio = bio;
+    if (skills && Array.isArray(skills)) updateData.skills = skills;
+    if (notificationPrefs !== undefined) updateData.notificationPrefs = notificationPrefs;
+
+    const user = await User.findByIdAndUpdate(userId, updateData, { new: true }).select('-passwordHash');
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    logger.info(`Profile updated for user: ${userId}`);
+
+    return res.json({
+      message: 'Profile updated successfully',
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        phone: user.phone,
+        phoneNumber: user.phoneNumber,
+        whatsappNumber: user.whatsappNumber,
+        telegramId: user.telegramId,
+        telegramUsername: user.telegramUsername,
+        location: user.location,
+        bio: user.bio,
+        skills: user.skills,
+        notificationPrefs: user.notificationPrefs,
+      },
+    });
+  } catch (err) {
+    logger.error(err, { context: 'updateProfile' });
+    return res.status(500).json({ error: 'Failed to update profile' });
+  }
+}

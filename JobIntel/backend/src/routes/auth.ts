@@ -6,6 +6,7 @@ import {
   logout,
   changePassword,
   verifyToken,
+  updateProfile,
 } from '../controllers/authController';
 import { authenticateToken } from '../middleware/auth';
 
@@ -17,5 +18,6 @@ router.post('/refresh', refreshToken);
 router.post('/logout', authenticateToken, logout);
 router.post('/change-password', authenticateToken, changePassword);
 router.get('/verify', authenticateToken, verifyToken);
+router.put('/profile', authenticateToken, updateProfile);
 
 export default router;

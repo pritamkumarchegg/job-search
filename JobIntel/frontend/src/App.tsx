@@ -55,6 +55,7 @@ const AppContent = () => {
       {/* Main pages with layout - for regular users and public */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/jobs" element={<JobsPage />} />
         <Route path="/all-jobs" element={<AllJobsPage />} />
         <Route path="/jobs/:id" element={<JobDetailPage />} />
         <Route path="/pricing" element={<PricingPage />} />
@@ -69,7 +70,6 @@ const AppContent = () => {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/jobs" element={<JobsPage />} />
         <Route path="/matched-jobs" element={<MatchedJobsPage />} />
         <Route path="/applications" element={<ApplicationsPage />} />
         <Route path="/saved" element={<SavedJobsPage />} />

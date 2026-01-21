@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuthStore } from '@/store/authStore';
 import { useToast } from '@/hooks/use-toast';
 import { ResumeUpload } from '@/components/ResumeUpload';
-import { Loader2, User, Mail, Phone, Briefcase } from 'lucide-react';
+import { Loader2, User, Mail, Phone, Briefcase, MessageCircle, Send } from 'lucide-react';
 
 export default function ProfilePage() {
   const { user } = useAuthStore();
@@ -17,6 +17,10 @@ export default function ProfilePage() {
     name: user?.name || '',
     email: user?.email || '',
     phone: user?.phone || '',
+    phoneNumber: user?.phoneNumber || '',
+    whatsappNumber: user?.whatsappNumber || '',
+    telegramId: user?.telegramId || '',
+    telegramUsername: user?.telegramUsername || '',
     bio: user?.bio || '',
     skills: (user?.skills || []).join(', '),
     location: user?.location || '',
@@ -39,12 +43,16 @@ export default function ProfilePage() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const res = await fetch('/api/users/profile', {
+      const res = await fetch('/api/auth/profile', {
         method: 'PUT',
         headers,
         body: JSON.stringify({
           name: formData.name,
           phone: formData.phone,
+          phoneNumber: formData.phoneNumber,
+          whatsappNumber: formData.whatsappNumber,
+          telegramId: formData.telegramId,
+          telegramUsername: formData.telegramUsername,
           bio: formData.bio,
           skills: formData.skills.split(',').map(s => s.trim()),
           location: formData.location,
@@ -131,6 +139,65 @@ export default function ProfilePage() {
                 onChange={handleChange}
                 placeholder="+1 (555) 000-0000"
               />
+            </div>
+
+            <div>
+              <Label htmlFor="phoneNumber" className="flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                Primary Phone Number
+              </Label>
+              <Input
+                id="phoneNumber"
+                name="phoneNumber"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                placeholder="+91 99999 99999"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="whatsappNumber" className="flex items-center gap-2">
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp Number
+              </Label>
+              <Input
+                id="whatsappNumber"
+                name="whatsappNumber"
+                value={formData.whatsappNumber}
+                onChange={handleChange}
+                placeholder="+91 99999 99999"
+              />
+              <p className="text-xs text-muted-foreground mt-1">We'll send job notifications here</p>
+            </div>
+
+            <div>
+              <Label htmlFor="telegramId" className="flex items-center gap-2">
+                <Send className="h-4 w-4" />
+                Telegram ID
+              </Label>
+              <Input
+                id="telegramId"
+                name="telegramId"
+                value={formData.telegramId}
+                onChange={handleChange}
+                placeholder="Your numeric Telegram ID"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Get your ID from @userinfobot on Telegram</p>
+            </div>
+
+            <div>
+              <Label htmlFor="telegramUsername" className="flex items-center gap-2">
+                <Send className="h-4 w-4" />
+                Telegram Username
+              </Label>
+              <Input
+                id="telegramUsername"
+                name="telegramUsername"
+                value={formData.telegramUsername}
+                onChange={handleChange}
+                placeholder="@your_username"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Optional: Your Telegram @username</p>
             </div>
 
             <div>

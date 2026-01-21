@@ -138,8 +138,8 @@ export default function AdminCrawlers() {
             });
 
             if (currentLog.status === 'completed') {
-              setSuccessMessage(`✅ Scraping completed! Found ${currentLog.totalJobsFound} jobs (${currentLog.indianJobsFound} from India) - ${currentLog.newJobsAdded} new added, ${currentLog.jobsUpdated} updated`);
-              setMongoMessage(`✨ MongoDB updated: ${currentLog.newJobsAdded} new documents added to 'jobs' collection (${currentLog.indianJobsAdded} from India)`);
+              setSuccessMessage(`✅ Scraping completed! Found ${currentLog.totalJobsFound} ${filterIndianOnly ? '(Indian) ' : ''}jobs - ${currentLog.newJobsAdded} new added, ${currentLog.jobsUpdated} updated`);
+              setMongoMessage(`✨ MongoDB updated: ${currentLog.newJobsAdded} new documents added to 'jobs' collection${filterIndianOnly ? ` (${currentLog.indianJobsAdded} from India)` : ''}`);
               setCurrentSessionId(null);
             } else if (currentLog.status === 'failed') {
               setSuccessMessage(`❌ Scraping failed for some buckets`);
@@ -212,7 +212,7 @@ export default function AdminCrawlers() {
         const data = await res.json();
         setCurrentSessionId(data.sessionId);
         setSuccessMessage(`🔄 Scraping started for: ${selectedBuckets.join(', ')}`);
-        setMongoMessage(`⏳ Scraping in progress... Connecting to OpenWeb Ninja API for Indian jobs`);
+        setMongoMessage(`⏳ Scraping in progress... Connecting to OpenWeb Ninja API for ${filterIndianOnly ? 'Indian jobs' : 'global jobs'}`);
         // Reload logs after a short delay
         setTimeout(loadLogs, 1000);
       } else {
@@ -265,9 +265,11 @@ export default function AdminCrawlers() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-3xl font-bold text-foreground">🇮🇳 Web Crawlers & Scraping (Indian Jobs)</h2>
+        <h2 className="text-3xl font-bold text-foreground">
+          {filterIndianOnly ? '🇮🇳 Indian Jobs' : '🌍 Global Jobs'} - Web Crawlers & Scraping
+        </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Real-time job scraping from OpenWeb Ninja API. Filter for Indian jobs only. Monitor progress per bucket.
+          Real-time job scraping from OpenWeb Ninja API. {filterIndianOnly ? 'Filtering for India only' : 'Global job search across all countries'}. Monitor progress per bucket.
         </p>
       </div>
 
@@ -280,9 +282,11 @@ export default function AdminCrawlers() {
             <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">from all APIs</p>
           </Card>
           <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
-            <p className="text-xs text-green-600 dark:text-green-300 font-medium uppercase mb-1">Indian Jobs 🇮🇳</p>
+            <p className="text-xs text-green-600 dark:text-green-300 font-medium uppercase mb-1">
+              {filterIndianOnly ? 'Indian Jobs 🇮🇳' : 'Global Jobs 🌍'}
+            </p>
             <p className="text-3xl font-bold text-green-900 dark:text-green-100">{realTimeStats.indianJobsFound}</p>
-            <p className="text-xs text-green-600 dark:text-green-300 mt-1">filtered & verified</p>
+            <p className="text-xs text-green-600 dark:text-green-300 mt-1">{filterIndianOnly ? 'filtered & verified' : 'from all countries'}</p>
           </Card>
           <Card className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900">
             <p className="text-xs text-purple-600 dark:text-purple-300 font-medium uppercase mb-1">Added to DB</p>
@@ -362,7 +366,7 @@ export default function AdminCrawlers() {
               className="w-5 h-5 rounded"
             />
             <label htmlFor="filterIndian" className="text-sm font-medium cursor-pointer">
-              🇮🇳 Filter for Indian Jobs Only (Recommended)
+              {filterIndianOnly ? '🇮🇳 Filter for Indian Jobs Only' : '🌍 Search Global Jobs'} - {filterIndianOnly ? 'Recommended for India-based hiring' : 'Include USA, UK, Canada, etc.'}
             </label>
           </div>
 
@@ -496,13 +500,13 @@ export default function AdminCrawlers() {
           {/* Info Box */}
           <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded p-4 text-sm text-blue-900 dark:text-blue-100 space-y-2">
             <p>
-              <strong>🔍 Filtering:</strong> Indian jobs only {filterIndianOnly ? '✅ ENABLED' : '❌ DISABLED'}
+              <strong>🔍 Filter Mode:</strong> {filterIndianOnly ? '🇮🇳 Indian Jobs Only' : '🌍 Global Jobs'} {filterIndianOnly ? '✅' : '✅'}
             </p>
             <p>
-              <strong>📍 Location:</strong> {filterIndianOnly ? '🇮🇳 India' : '🌍 Global'} {filterIndianOnly ? '(Mumbai, Delhi, Bangalore, Hyderabad, Pune, Gurgaon, etc.)' : ''}
+              <strong>📍 Locations:</strong> {filterIndianOnly ? '🇮🇳 India only (Mumbai, Delhi, Bangalore, Hyderabad, Pune, etc.)' : '🌍 Worldwide (USA, UK, Canada, Singapore, India, etc.)'}
             </p>
             <p>
-              <strong>🌐 Countries:</strong> {filterIndianOnly ? 'India (Primary)' : 'USA, UK, Canada (Fallback)'} 
+              <strong>💼 Job Coverage:</strong> {filterIndianOnly ? 'Focused on India-based positions' : 'Broad international opportunities'} 
             </p>
             <p>
               <strong>📄 Multi-Page Scraping:</strong> ✅ 10 pages per bucket (500+ jobs per category)
