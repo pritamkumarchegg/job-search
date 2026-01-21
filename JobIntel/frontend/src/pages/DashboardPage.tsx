@@ -43,17 +43,28 @@ import {
 import { useState, useEffect } from 'react';
 
 const DashboardPage = () => {
-  console.log('🔍 [DashboardPage] Component rendered/updated');
+  console.log('🔍 [DashboardPage] ========== COMPONENT RENDER START ==========');
+  console.log('🔍 [DashboardPage] Component rendered/updated at', new Date().toISOString());
+  console.log('🔍 [DashboardPage] BUILD VERSION: 2025-01-21-V2-FETCH-FIX');
 
   const { user, isAuthenticated, logout } = useAuthStore();
+  const [skillsRating, setSkillsRating] = useState<any>({});
+  
+  console.log('🔍 [DashboardPage] *** AUTH STATE CHECK ***');
+  console.log('🔍 [DashboardPage] isAuthenticated:', isAuthenticated);
+  console.log('🔍 [DashboardPage] user exists:', !!user);
+  console.log('🔍 [DashboardPage] user id:', user?.id);
+  console.log('🔍 [DashboardPage] user email:', user?.email);
   console.log('🔍 [DashboardPage] Auth state:', { isAuthenticated, user: user ? { id: user.id, name: user.name, email: user.email, tier: user.tier } : null });
+  console.log('🔍 [DashboardPage] Local skillsRating state:', skillsRating);
+  console.log('🔍 [DashboardPage] Local skillsRating keys count:', Object.keys(skillsRating).length);
 
   if (!isAuthenticated || !user) {
-    console.log('🔍 [DashboardPage] User not authenticated, redirecting to login');
+    console.log('🔍 [DashboardPage] ❌ User not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
-  console.log('🔍 [DashboardPage] User authenticated, proceeding with dashboard render');
+  console.log('🔍 [DashboardPage] ✅ User authenticated, proceeding with dashboard render');
 
   // Add extra safety check for notificationPreferences
   const notifPrefs = user.notificationPreferences || {
@@ -89,7 +100,13 @@ const DashboardPage = () => {
   const [savingProfile, setSavingProfile] = useState(false);
   // Skills modal state
   const [editSkillsOpen, setEditSkillsOpen] = useState(false);
-  const [skillsForm, setSkillsForm] = useState<string[]>(user.skills || []);
+  const [skillsForm, setSkillsForm] = useState<string[]>(() => {
+    // Get skills from skillsRating map (from parsed resume) or fall back to skills array
+    if ((user as any).skillsRating && typeof (user as any).skillsRating === 'object') {
+      return Object.keys((user as any).skillsRating);
+    }
+    return user.skills || [];
+  });
   const [availableSkills, setAvailableSkills] = useState<string[]>([]);
   const [savingSkills, setSavingSkills] = useState(false);
   const [newSkill, setNewSkill] = useState('');
@@ -122,6 +139,94 @@ const DashboardPage = () => {
     { label: 'Interviews', value: 0, icon: Calendar, color: 'text-success' },
     { label: 'Saved Jobs', value: 0, icon: Bookmark, color: 'text-warning' },
   ];
+
+  // Fetch full user profile including skillsRating from backend - fires once on mount
+  useEffect(() => {
+    console.log('🔍 [DashboardPage] ========== MOUNT EFFECT: FETCH USER PROFILE ==========');
+    console.log('🔍 [DashboardPage] useEffect fired - checking user...');
+    console.log('🔍 [DashboardPage] user:', user);
+    console.log('🔍 [DashboardPage] user?.id:', user?.id);
+    
+    if (!user || !user.id) {
+      console.log('🔍 [DashboardPage] ❌ No user or user.id, skipping profile fetch');
+      return;
+    }
+
+    console.log('🔍 [DashboardPage] ✅ Starting to fetch full user profile');
+    let mounted = true;
+
+    const fetchUserProfile = async () => {
+      try {
+        const base = '';  // Use relative URL for CORS compatibility
+        const url = `/api/users/${user.id}`;
+        console.log('🔍 [DashboardPage] 📡 FETCH REQUEST to:', url);
+
+        const token = localStorage.getItem('token');
+        console.log('🔍 [DashboardPage] Token from localStorage:', !!token, 'length:', token?.length);
+        
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        console.log('🔍 [DashboardPage] Sending fetch with headers:', Object.keys(headers));
+        const res = await fetch(url, {
+          cache: 'no-store',
+          headers,
+        });
+        
+        console.log('🔍 [DashboardPage] 📥 API RESPONSE - Status:', res.status, 'OK:', res.ok);
+
+        if (!res.ok) {
+          console.warn('🔍 [DashboardPage] ❌ Failed with status:', res.status);
+          const errorText = await res.text();
+          console.warn('🔍 [DashboardPage] Error response:', errorText);
+          return;
+        }
+
+        const userData = await res.json();
+        console.log('🔍 [DashboardPage] 📊 PARSED USER DATA');
+        console.log('🔍 [DashboardPage]   userData:', userData);
+        console.log('🔍 [DashboardPage]   userData.skillsRating:', userData?.skillsRating);
+        console.log('🔍 [DashboardPage]   skillsRating type:', typeof userData?.skillsRating);
+        console.log('🔍 [DashboardPage]   skillsRating keys:', userData?.skillsRating ? Object.keys(userData.skillsRating) : []);
+        console.log('🔍 [DashboardPage]   skillsRating count:', userData?.skillsRating ? Object.keys(userData.skillsRating).length : 0);
+
+        if (!mounted) {
+          console.log('🔍 [DashboardPage] Component unmounted, not updating');
+          return;
+        }
+
+        // Update local skillsRating state
+        if (userData?.skillsRating) {
+          console.log('🔍 [DashboardPage] ✅ SETTING LOCAL SKILLSRATING STATE with', Object.keys(userData.skillsRating).length, 'skills');
+          setSkillsRating(userData.skillsRating);
+          console.log('🔍 [DashboardPage] setSkillsRating called');
+        } else {
+          console.log('🔍 [DashboardPage] ⚠️ No skillsRating in userData');
+        }
+
+        // Update user in auth store
+        if (userData) {
+          console.log('🔍 [DashboardPage] ✅ Updating auth store with userData');
+          const { updateUserFromBackend } = useAuthStore.getState();
+          updateUserFromBackend(userData);
+        }
+      } catch (e) {
+        console.error('🔍 [DashboardPage] ❌ FETCH ERROR:', e);
+      }
+    };
+
+    console.log('🔍 [DashboardPage] Calling fetchUserProfile immediately');
+    fetchUserProfile();
+    
+    return () => {
+      console.log('🔍 [DashboardPage] Mount effect cleanup');
+      mounted = false;
+    };
+  }, []);
 
   // Fetch matched jobs from backend (top matches). Keep lightweight and update periodically.
   useEffect(() => {
@@ -306,58 +411,26 @@ const DashboardPage = () => {
   // Load profile fields when profile modal opens (or on mount)
   useEffect(() => {
     console.log('🔍 [DashboardPage] useEffect: Loading profile fields for modal');
-    let mounted = true;
-    const fetchFields = async () => {
-      try {
-        const base = backendBase ? backendBase.replace(/\/$/, '') : '';
-        const url = base ? `${base}/api/profile-fields` : '/api/profile-fields';
-        console.log('🔍 [DashboardPage] Fetching profile fields for modal from URL:', url);
-
-        const res = await fetch(url, { cache: 'no-store' });
-        console.log('🔍 [DashboardPage] Profile fields modal API response status:', res.status);
-
-        if (!res.ok) {
-          console.warn('🔍 [DashboardPage] Profile fields modal API returned non-ok status:', res.status);
-          return;
-        }
-
-        const fields = await res.json();
-        console.log('🔍 [DashboardPage] Profile fields modal API response data:', fields);
-
-        if (!mounted) {
-          console.log('🔍 [DashboardPage] Component unmounted, not updating profile fields for modal');
-          return;
-        }
-
-        const fieldsArray = Array.isArray(fields) ? fields : [];
-        console.log('🔍 [DashboardPage] Setting profile fields for modal:', fieldsArray.length, 'fields');
-        setProfileFields(fieldsArray);
-      } catch (e) {
-        console.error('🔍 [DashboardPage] Failed to fetch profile fields for modal:', e);
-      }
-    };
-    fetchFields();
-    return () => {
-      console.log('🔍 [DashboardPage] Cleaning up profile fields modal fetch');
-      mounted = false;
-    };
-  }, [backendBase]);
+    // Simplified: only load skills, ignore complex profile fields
+    setProfileFields([]);
+  }, []);
 
   // keep profile form and skills form in sync with current user
   useEffect(() => {
-    // initialize profile form with admin-defined profile fields if available
+    // Simple profile form - only basic fields, focus on skills
     const baseForm: any = {
       name: user.name || '',
       email: user.email || '',
       phone: (user as any).phone || '',
-      batch: (user as any).batch || '',
     };
-    (profileFields || []).forEach((f: any) => {
-      baseForm[f.key] = (user as any)[f.key] ?? '';
-    });
     setProfileForm(baseForm);
-    setSkillsForm(Array.from(new Set(user.skills || [])));
-  }, [user, profileFields]);
+    // Get skills from skillsRating (extracted from resume) or fall back to skills array
+    if ((user as any).skillsRating && typeof (user as any).skillsRating === 'object') {
+      setSkillsForm(Array.from(new Set(Object.keys((user as any).skillsRating))));
+    } else {
+      setSkillsForm(Array.from(new Set(user.skills || [])));
+    }
+  }, [user]);
 
   const toggleSkill = (skill: string) => {
     setSkillsForm((prev) => {
@@ -440,12 +513,16 @@ const DashboardPage = () => {
     }
   };
 
-  console.log('🔍 [DashboardPage] Rendering component');
-  console.log('🔍 [DashboardPage] Current user:', user);
-  console.log('🔍 [DashboardPage] Matched jobs count:', matchedJobs.length);
-  console.log('🔍 [DashboardPage] Recent applications count:', recentApplications.length);
-  console.log('🔍 [DashboardPage] Profile fields count:', profileFields.length);
-  console.log('🔍 [DashboardPage] Available skills count:', availableSkills.length);
+  console.log('🔍 [DashboardPage] ========== RENDER STATE SNAPSHOT ==========');
+  console.log('🔍 [DashboardPage] Final component state before JSX render:');
+  console.log('🔍 [DashboardPage]   - skillsRating:', skillsRating);
+  console.log('🔍 [DashboardPage]   - skillsRating keys:', Object.keys(skillsRating));
+  console.log('🔍 [DashboardPage]   - skillsRating count:', Object.keys(skillsRating).length);
+  console.log('🔍 [DashboardPage]   - matchedJobs count:', matchedJobs.length);
+  console.log('🔍 [DashboardPage]   - recentApplications count:', recentApplications.length);
+  console.log('🔍 [DashboardPage]   - profileFields count:', profileFields.length);
+  console.log('🔍 [DashboardPage]   - availableSkills count:', availableSkills.length);
+  console.log('🔍 [DashboardPage] ========== JSX RENDER START ==========');
 
   return (
     <div className="space-y-6">
@@ -475,7 +552,8 @@ const DashboardPage = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-2 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-2 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+            {console.log('🔍 [DashboardPage] RENDERING 5-COLUMN GRID - skillsRating count:', Object.keys(skillsRating).length) || null}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Matched Jobs</CardTitle>
@@ -515,18 +593,73 @@ const DashboardPage = () => {
               </CardContent>
             </Card>
             <Card>
+              {console.log('🔍 [DashboardPage] RENDERING SKILLS CARD - current skillsRating:', skillsRating, 'count:', Object.keys(skillsRating).length) || null}
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Skills</CardTitle>
                 <Zap className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{user?.skills?.length || 0}</div>
+                <div className="text-2xl font-bold">
+                  {Object.keys(skillsRating).length || (user?.skills?.length || 0)}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Skills in your profile
+                  Skills extracted from resume
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              {console.log('🔍 [DashboardPage] RENDERING RESUME SKILLS CARD - skillsRating keys:', Object.keys(skillsRating)) || null}
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Resume Skills</CardTitle>
+                <Award className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {Object.keys(skillsRating).length || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Skills from your resume
                 </p>
               </CardContent>
             </Card>
           </div>
+
+          {/* Resume Skills Card */}
+          <Card className="col-span-full">
+            {console.log('🔍 [DashboardPage] RENDERING RESUME SKILLS CARD - skillsRating:', skillsRating, 'keys count:', Object.keys(skillsRating).length) || null}
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5" />
+                Resume Skills
+              </CardTitle>
+              <CardDescription>
+                Skills extracted from your resume ({Object.keys(skillsRating).length} skills)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto">
+                {console.log('🔍 [DashboardPage] RENDERING SKILL BADGES - skillsRating keys:', Object.keys(skillsRating), 'count:', Object.keys(skillsRating).length) || null}
+                {Object.keys(skillsRating).length > 0 ? (
+                  Object.keys(skillsRating).map((skill: string) => {
+                    console.log('🔍 [DashboardPage] RENDERING BADGE FOR SKILL:', skill);
+                    return (
+                      <Badge key={skill} variant="secondary" className="px-3 py-1.5">
+                        {skill}
+                      </Badge>
+                    );
+                  })
+                ) : user?.skills && user.skills.length > 0 ? (
+                  user.skills.map((skill: string) => (
+                    <Badge key={skill} variant="secondary" className="px-3 py-1.5">
+                      {skill}
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No skills found. Upload your resume to extract skills.</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           <div className="grid gap-2 sm:gap-4 grid-cols-1 md:grid-cols-2">
             <Card className="overflow-auto">

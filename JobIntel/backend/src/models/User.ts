@@ -18,6 +18,16 @@ export interface IUser extends mongoose.Document {
   savedJobs?: string[]; // Array of saved job IDs
   roles: string[];
   tier: string;
+  // Matching-related fields
+  skillsRating?: Record<string, number>; // skill: rating (0-5)
+  targetRoles?: string[]; // Desired job roles
+  targetLocations?: string[]; // Preferred locations
+  targetTechStack?: string[]; // Preferred technologies
+  targetDomains?: string[]; // Preferred domains
+  experienceYears?: number; // Years of experience
+  careerLevel?: 'fresher' | 'junior' | 'mid' | 'senior' | 'lead';
+  workModePreference?: 'remote' | 'onsite' | 'hybrid';
+  profileCompleteness?: number; // Percentage (0-100)
   notificationPrefs: {
     email: boolean;
     whatsapp: boolean;
@@ -53,6 +63,16 @@ const UserSchema = new Schema<IUser>(
     savedJobs: { type: [String], default: [] }, // Array of saved job IDs
     roles: { type: [String], default: ["user"] },
     tier: { type: String, default: "free" },
+    // Matching-related fields
+    skillsRating: { type: Map, of: Number, default: new Map() }, // skill: rating (0-5)
+    targetRoles: { type: [String], default: [] },
+    targetLocations: { type: [String], default: ["India"] },
+    targetTechStack: { type: [String], default: [] },
+    targetDomains: { type: [String], default: [] },
+    experienceYears: { type: Number, default: 0 },
+    careerLevel: { type: String, enum: ['fresher', 'junior', 'mid', 'senior', 'lead'], default: 'fresher' },
+    workModePreference: { type: String, enum: ['remote', 'onsite', 'hybrid'], default: 'hybrid' },
+    profileCompleteness: { type: Number, default: 0 },
     notificationPrefs: {
       email: { type: Boolean, default: true },
       whatsapp: { type: Boolean, default: false },

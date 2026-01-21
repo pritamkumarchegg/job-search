@@ -1,12 +1,48 @@
 import { logger } from '../utils/logger';
 import fs from 'fs';
 import path from 'path';
+
+// Polyfill DOMMatrix for Node.js environment
+if (typeof global !== 'undefined' && !global.DOMMatrix) {
+  (global as any).DOMMatrix = class DOMMatrix {
+    constructor(init?: any) {
+      this.a = 1;
+      this.b = 0;
+      this.c = 0;
+      this.d = 1;
+      this.e = 0;
+      this.f = 0;
+    }
+    a: number;
+    b: number;
+    c: number;
+    d: number;
+    e: number;
+    f: number;
+  };
+}
+
+// Polyfill Promise.withResolvers for Node.js < v22
+if (!(Promise as any).withResolvers) {
+  (Promise as any).withResolvers = function<T>() {
+    let resolve!: (value: T | PromiseLike<T>) => void;
+    let reject!: (reason?: any) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  };
+}
+
 import * as pdfjs from 'pdfjs-dist';
 import { Document } from 'docx';
 import { readFile } from 'xlsx';
 
-// Set the worker path for pdfjs
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// Set the worker path for pdfjs - use the bundled worker for Node.js
+// Use require.resolve to get the correct path relative to node_modules
+const pdfWorkerPath = require.resolve('pdfjs-dist/build/pdf.worker.mjs');
+(pdfjs as any).GlobalWorkerOptions.workerSrc = pdfWorkerPath;
 
 interface ParsedResumeData {
   text: string;
@@ -90,7 +126,9 @@ class ResumeParserService {
   private async extractPdfText(filePath: string): Promise<string> {
     try {
       const fileBuffer = fs.readFileSync(filePath);
-      const pdf = await pdfjs.getDocument({ data: fileBuffer }).promise;
+      // Convert Buffer to Uint8Array as required by pdfjs
+      const uint8Array = new Uint8Array(fileBuffer);
+      const pdf = await pdfjs.getDocument({ data: uint8Array }).promise;
       let text = '';
 
       for (let i = 1; i <= pdf.numPages; i++) {
@@ -338,16 +376,22 @@ class ResumeParserService {
    */
   async parseResume(filePath: string): Promise<ParsedResumeData> {
     try {
+      console.log(`[ResumeParser] Starting to parse: ${filePath}`);
       logger.info(`Parsing resume: ${filePath}`);
 
       const ext = path.extname(filePath).toLowerCase();
+      console.log(`[ResumeParser] File extension: ${ext}`);
       let rawText = '';
 
       // Extract text based on file type
       if (ext === '.pdf') {
+        console.log(`[ResumeParser] Extracting PDF text...`);
         rawText = await this.extractPdfText(filePath);
+        console.log(`[ResumeParser] PDF extraction complete. Text length: ${rawText.length}`);
       } else if (ext === '.docx') {
+        console.log(`[ResumeParser] Extracting DOCX text...`);
         rawText = await this.extractDocxText(filePath);
+        console.log(`[ResumeParser] DOCX extraction complete. Text length: ${rawText.length}`);
       } else {
         throw new Error(`Unsupported file format: ${ext}`);
       }
@@ -357,11 +401,21 @@ class ResumeParserService {
       }
 
       // Extract components
+      console.log(`[ResumeParser] Detecting skills...`);
       const { skills, technologies } = this.detectSkills(rawText);
+      console.log(`[ResumeParser] Skills detected: ${skills.length}, Technologies: ${technologies.length}`);
+      
       const workExperience = this.extractWorkExperience(rawText);
+      console.log(`[ResumeParser] Work experience entries: ${workExperience.length}`);
+      
       const education = this.extractEducation(rawText);
+      console.log(`[ResumeParser] Education entries: ${education.length}`);
+      
       const { email, phone } = this.extractContactInfo(rawText);
+      console.log(`[ResumeParser] Contact info - Email: ${email}, Phone: ${phone}`);
+      
       const location = this.extractLocation(rawText);
+      console.log(`[ResumeParser] Location: ${location}`);
 
       const parsed: Partial<ParsedResumeData> = {
         skills,
@@ -374,6 +428,7 @@ class ResumeParserService {
       };
 
       const parsingQuality = this.calculateParsingQuality(parsed, rawText);
+      console.log(`[ResumeParser] Parsing quality: ${parsingQuality}`);
 
       const result: ParsedResumeData = {
         text: rawText,
@@ -388,11 +443,19 @@ class ResumeParserService {
         rawText,
       };
 
+      console.log(`[ResumeParser] Resume parsed successfully`);
       logger.info(`Resume parsed successfully with ${skills.length} skills detected`, { filePath });
 
       return result;
     } catch (error) {
-      logger.error(`Error parsing resume: ${error}`, { filePath });
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : '';
+      console.error(`[ResumeParser] Error parsing resume:`, {
+        message: errorMsg,
+        stack: errorStack,
+        filePath,
+      });
+      logger.error(`Error parsing resume: ${errorMsg}`, { filePath, stack: errorStack });
       throw error;
     }
   }

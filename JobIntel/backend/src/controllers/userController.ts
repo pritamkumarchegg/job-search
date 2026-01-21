@@ -54,7 +54,21 @@ export const getUser = async (req: Request, res: Response) => {
     const { id } = req.params;
     const user = await User.findById(id).lean();
     if (!user) return res.status(404).json({ error: 'User not found' });
-    return res.json(user);
+    
+    // Convert skillsRating Map to plain object if needed
+    const userData = {
+      ...user,
+      skillsRating: user.skillsRating instanceof Map 
+        ? Object.fromEntries(user.skillsRating)
+        : (user.skillsRating || {})
+    };
+    
+    console.log('[UserController] getUser response:', { 
+      userId: userData._id, 
+      skillsRatingKeys: typeof userData.skillsRating === 'object' ? Object.keys(userData.skillsRating).length : 0 
+    });
+    
+    return res.json(userData);
   } catch (err: any) {
     console.error('getUser error', err);
     return res.status(500).json({ error: err?.message || 'server error' });

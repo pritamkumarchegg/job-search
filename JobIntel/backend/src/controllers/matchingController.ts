@@ -32,6 +32,7 @@ export const getMatchedJobs = async (req: AuthRequest, res: Response) => {
     const matchType = req.query.matchType as string;
     const sortBy = (req.query.sortBy as string) || 'totalScore';
 
+    console.log(`[MatchingController] Fetching matches for user: ${userId}, minScore: ${minScore}`);
     logger.info(`Fetching matched jobs for user: ${userId}`, {
       limit,
       skip,
@@ -68,6 +69,7 @@ export const getMatchedJobs = async (req: AuthRequest, res: Response) => {
 
     const total = await JobMatch.countDocuments(query);
 
+    console.log(`[MatchingController] Found ${matches.length} matches for user: ${userId}, total: ${total}`);
     logger.info(`Returned ${matches.length} matched jobs for user`, { userId, total });
 
     return res.status(200).json({

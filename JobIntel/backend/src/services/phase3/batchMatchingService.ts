@@ -42,6 +42,7 @@ class BatchMatchingService {
     };
 
     logger.info(`Starting batch matching for user: ${userId}`, { sessionId, minScore });
+    console.log(`[BatchMatching] Starting batch matching for user: ${userId}, minScore: ${minScore}`);
 
     try {
       // Fetch user profile
@@ -49,6 +50,8 @@ class BatchMatchingService {
       if (!user) {
         throw new Error(`User not found: ${userId}`);
       }
+
+      console.log(`[BatchMatching] User found: ${userId}, skillsRating:`, Object.keys(user.skillsRating || {}));
 
       // Build user profile for matching engine
       const userProfile: EngineUserProfile = {
@@ -63,11 +66,12 @@ class BatchMatchingService {
       };
 
       // Fetch all active jobs
-      const jobs = await Job.find({ isActive: true, expiryDate: { $gt: new Date() } })
+      const jobs = await Job.find({ status: { $ne: 'archived' } })
         .limit(limit)
         .lean();
 
       stats.totalJobsProcessed = jobs.length;
+      console.log(`[BatchMatching] Fetched ${jobs.length} active jobs for matching`);
       logger.info(`Fetched ${jobs.length} active jobs for matching`, { sessionId });
 
       // Match each job
@@ -121,6 +125,7 @@ class BatchMatchingService {
       // Bulk insert/update job matches
       if (matches.length > 0) {
         logger.info(`Bulk upserting ${matches.length} job matches`, { sessionId });
+        console.log(`[BatchMatching] Upserting ${matches.length} job matches for user: ${userId}`);
 
         const bulkOps = matches.map((match) => ({
           updateOne: {
@@ -133,6 +138,9 @@ class BatchMatchingService {
         const result = await JobMatch.bulkWrite(bulkOps);
         stats.jobsCreated = result.upsertedCount;
         stats.jobsUpdated = result.modifiedCount;
+        console.log(`[BatchMatching] Upsert complete. Created: ${result.upsertedCount}, Updated: ${result.modifiedCount}`);
+      } else {
+        console.log(`[BatchMatching] No matching jobs found for user: ${userId}`);
       }
 
       stats.averageScore = matches.length > 0 ? Math.round(totalScore / matches.length) : 0;

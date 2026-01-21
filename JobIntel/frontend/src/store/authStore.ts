@@ -14,6 +14,7 @@ interface AuthState {
   updateUser: (updates: Partial<User>) => void;
   upgradeTier: (tier: UserTier) => void;
   initializeFromStorage: () => void;
+  updateUserFromBackend: (backendData: any) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -173,6 +174,26 @@ export const useAuthStore = create<AuthState>()(
         set((state) => ({
           user: state.user ? { ...state.user, ...updates } : null,
         }));
+      },
+
+      updateUserFromBackend: (backendData: any) => {
+        console.log('[AuthStore] Updating user from backend data:', backendData);
+        set((state) => {
+          if (!state.user) return state;
+          
+          const updatedUser = {
+            ...state.user,
+            ...backendData,
+            // Preserve auth-specific fields
+            id: state.user.id,
+            role: state.user.role,
+            createdAt: state.user.createdAt,
+            notificationPreferences: backendData.notificationPreferences || state.user.notificationPreferences,
+          };
+          
+          console.log('[AuthStore] Updated user object:', updatedUser);
+          return { user: updatedUser };
+        });
       },
 
       upgradeTier: (tier: UserTier) => {
