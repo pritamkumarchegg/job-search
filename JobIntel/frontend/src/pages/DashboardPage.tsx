@@ -265,7 +265,7 @@ const DashboardPage = () => {
           return;
         }
 
-        const jobsArray = Array.isArray(data) ? data.slice(0, 3) : (data.matches || []).slice(0, 3);
+        const jobsArray = Array.isArray(data) ? data.slice(0, 10) : (data.matches || []).slice(0, 10);
         console.log('🔍 [DashboardPage] Setting matched jobs:', jobsArray.length, 'jobs');
         setMatchedJobs(jobsArray);
       } catch (e) {

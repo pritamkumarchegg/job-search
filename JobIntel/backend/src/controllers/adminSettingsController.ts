@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Skill } from '../models/Skill';
 import { ProfileField } from '../models/ProfileField';
+import { AdminSettings } from '../models/AdminSettings';
 import publishRealtime from '../utils/realtime';
 
 // Skills CRUD
@@ -91,6 +92,89 @@ export const deleteProfileField = async (req: Request, res: Response) => {
     return res.json({ success: true });
   } catch (err: any) {
     console.error('deleteProfileField', err);
+    return res.status(500).json({ error: err?.message || 'server error' });
+  }
+};
+
+// Admin Settings CRUD
+export const getAllSettings = async (_req: Request, res: Response) => {
+  try {
+    const settings = await AdminSettings.find().lean();
+    const settingsMap = settings.reduce((acc: any, setting: any) => {
+      acc[setting.key] = setting.value;
+      return acc;
+    }, {});
+    return res.json(settingsMap);
+  } catch (err: any) {
+    console.error('getAllSettings', err);
+    return res.status(500).json({ error: err?.message || 'server error' });
+  }
+};
+
+export const getSetting = async (req: Request, res: Response) => {
+  try {
+    const { key } = req.params;
+    const setting = await AdminSettings.findOne({ key }).lean();
+    if (!setting) {
+      return res.status(404).json({ error: 'Setting not found' });
+    }
+    return res.json(setting);
+  } catch (err: any) {
+    console.error('getSetting', err);
+    return res.status(500).json({ error: err?.message || 'server error' });
+  }
+};
+
+export const updateSetting = async (req: Request, res: Response) => {
+  try {
+    const { key } = req.params;
+    const { value, type = 'string', description } = req.body;
+
+    if (value === undefined) {
+      return res.status(400).json({ error: 'value required' });
+    }
+
+    const setting = await AdminSettings.findOneAndUpdate(
+      { key },
+      {
+        value,
+        type,
+        description,
+        updatedBy: (req as any).user?._id,
+        updatedAt: new Date(),
+      },
+      { new: true, upsert: true }
+    );
+
+    publishRealtime('realtime:admin_settings', {
+      type: 'admin_settings',
+      action: 'update',
+      key,
+      value,
+    });
+
+    return res.json(setting);
+  } catch (err: any) {
+    console.error('updateSetting', err);
+    return res.status(500).json({ error: err?.message || 'server error' });
+  }
+};
+
+export const deleteSetting = async (req: Request, res: Response) => {
+  try {
+    const { key } = req.params;
+    const doc = await AdminSettings.findOneAndDelete({ key });
+    if (!doc) return res.status(404).json({ error: 'not found' });
+
+    publishRealtime('realtime:admin_settings', {
+      type: 'admin_settings',
+      action: 'delete',
+      key,
+    });
+
+    return res.json({ success: true });
+  } catch (err: any) {
+    console.error('deleteSetting', err);
     return res.status(500).json({ error: err?.message || 'server error' });
   }
 };

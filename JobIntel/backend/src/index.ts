@@ -288,6 +288,12 @@ async function start() {
     log('📦 Ensuring admin user exists...');
     await ensureAdminExists();
 
+    // 1.6. Initialize admin settings
+    log('📦 Initializing admin settings...');
+    const { initializeDefaultSettings } = require('./utils/adminSettingsHelper');
+    await initializeDefaultSettings();
+    log('✓ Admin settings initialized');
+
     // 2. Initialize Redis
     log('📦 Initializing Redis...');
     const redis = await initRedis();

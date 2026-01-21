@@ -27,6 +27,10 @@ import {
   createProfileField,
   updateProfileField,
   deleteProfileField,
+  getAllSettings,
+  getSetting,
+  updateSetting,
+  deleteSetting,
 } from '../controllers/adminSettingsController';
 
 const router = express.Router();
@@ -66,5 +70,11 @@ router.get('/profile-fields', authenticateToken, requireRole('admin'), listProfi
 router.post('/profile-fields', authenticateToken, requireRole('admin'), createProfileField);
 router.put('/profile-fields/:id', authenticateToken, requireRole('admin'), updateProfileField);
 router.delete('/profile-fields/:id', authenticateToken, requireRole('admin'), deleteProfileField);
+
+// Admin settings
+router.get('/settings', authenticateToken, requireRole('admin'), getAllSettings);
+router.get('/settings/:key', authenticateToken, requireRole('admin'), getSetting);
+router.put('/settings/:key', authenticateToken, requireRole('admin'), updateSetting);
+router.delete('/settings/:key', authenticateToken, requireRole('admin'), deleteSetting);
 
 export default router;

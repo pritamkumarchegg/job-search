@@ -35,6 +35,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminSkills from "./pages/admin/AdminSkills";
 import AdminProfileFields from "./pages/admin/AdminProfileFields";
 import MatchedJobsPage from "./pages/MatchedJobsPage";
+import BestFitJobsPage from "./pages/BestFitJobsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -71,6 +72,7 @@ const AppContent = () => {
       >
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/matched-jobs" element={<MatchedJobsPage />} />
+        <Route path="/best-fit-jobs" element={<BestFitJobsPage />} />
         <Route path="/applications" element={<ApplicationsPage />} />
         <Route path="/saved" element={<SavedJobsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
