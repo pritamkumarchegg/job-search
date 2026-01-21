@@ -4,18 +4,84 @@ services:
     env: node
     region: oregon
     plan: free
-    repo: https://github.com/alkasingh1121/JobIntel.git
+    repo: https://github.com/pritamkumarchegg/job-search.git
     branch: main
+    
+    # Build & Start Commands
     buildCommand: npm ci && npm run build -w backend
-    startCommand: npm start --prefix backend
+    startCommand: npm start -w backend
+    
+    # Health check
+    healthCheckPath: /api/health
+    healthCheckInterval: 30
+    healthCheckTimeout: 5
+    
+    # Environment Variables - REQUIRED
     envVars:
       - key: NODE_ENV
         value: production
+        
       - key: MONGO_URI
+        sync: false
+        # Format: mongodb+srv://username:password@cluster.mongodb.net/jobintel
+        # Get from MongoDB Atlas dashboard
+        
       - key: JWT_SECRET
-      - key: GITHUB_CLIENT_ID
-      - key: GITHUB_CLIENT_SECRET
-      - key: GITHUB_CALLBACK_URL
-        value: "https://<your-backend>.onrender.com/auth/github/callback"
+        sync: false
+        # Generate random 32+ char string: openssl rand -base64 32
+        
+      - key: VITE_API_URL
+        value: https://jobintel-backend.onrender.com
+        
       - key: CORS_ORIGIN
-        value: "https://jobintell.netlify.app"
+        value: https://jobintel.netlify.app
+        
+      # Optional: GitHub OAuth
+      - key: GITHUB_CLIENT_ID
+        sync: false
+        
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+        
+      - key: GITHUB_CALLBACK_URL
+        value: https://jobintel-backend.onrender.com/auth/github/callback
+        
+      # Optional: Notification Services
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+        
+      - key: WHATSAPP_API_KEY
+        sync: false
+        
+      # Optional: Email Service
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+        
+      - key: SMTP_PORT
+        value: 587
+        
+      - key: SMTP_USER
+        sync: false
+        
+      - key: SMTP_PASS
+        sync: false
+        
+      # Optional: Payment Gateway (Razorpay)
+      - key: RAZORPAY_KEY_ID
+        sync: false
+        
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+    
+    # Auto-deploy on GitHub push
+    autoDeploy: true
+    
+    # Scaling configuration
+    minInstances: 1
+    maxInstances: 3
+
+# Database: Use MongoDB Atlas (not configured here)
+# Setup at: https://www.mongodb.com/cloud/atlas
+
+# Redis: Render provides built-in Redis
+# No separate configuration needed
