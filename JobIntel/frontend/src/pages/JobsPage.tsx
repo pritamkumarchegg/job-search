@@ -699,6 +699,7 @@ const JobsPage = () => {
                               size="sm"
                               className="text-xs sm:text-sm"
                               onClick={() => {
+                                trackClick('apply_job', { jobId: job.id, jobTitle: job.title });
                                 setSelectedJobForAuth({ id: job.id, title: job.title });
                                 setAuthModalOpen(true);
                               }}

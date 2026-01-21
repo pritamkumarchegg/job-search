@@ -13,8 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, MapPin, Building2, Search, Briefcase, Filter, X, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { Loader2, MapPin, Building2, Search, Briefcase, Filter, X, ChevronLeft, ChevronRight, Eye, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthStore } from '@/store/authStore';
+import AuthRequiredModal from '@/components/AuthRequiredModal';
 
 interface Job {
   _id: string;
@@ -38,6 +40,11 @@ export default function AllJobsPage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 15;
+
+  // Auth modal state
+  const { isAuthenticated } = useAuthStore();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [selectedJobForAuth, setSelectedJobForAuth] = useState<{ id: string; title: string } | null>(null);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -375,15 +382,30 @@ export default function AllJobsPage() {
                   {/* Action Buttons */}
                   <div className="flex gap-2 flex-col">
                     {job.applyUrl || job.applyLink ? (
-                      <a
-                        href={job.applyUrl || job.applyLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors text-sm whitespace-nowrap"
-                      >
-                        <Briefcase className="h-4 w-4" />
-                        Apply Now
-                      </a>
+                      isAuthenticated ? (
+                        <a
+                          href={job.applyUrl || job.applyLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors text-sm whitespace-nowrap"
+                        >
+                          <Briefcase className="h-4 w-4" />
+                          Apply Now
+                        </a>
+                      ) : (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="text-sm w-full justify-center gap-2"
+                          onClick={() => {
+                            setSelectedJobForAuth({ id: job._id, title: job.title });
+                            setAuthModalOpen(true);
+                          }}
+                        >
+                          <Briefcase className="h-4 w-4" />
+                          Apply Now
+                        </Button>
+                      )
                     ) : (
                       <button
                         disabled
@@ -392,13 +414,28 @@ export default function AllJobsPage() {
                         No Apply Link
                       </button>
                     )}
-                    <Link
-                      to={`/jobs/${job._id}`}
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md font-medium hover:bg-secondary/90 transition-colors text-sm whitespace-nowrap"
-                    >
-                      <Eye className="h-4 w-4" />
-                      Details
-                    </Link>
+                    {isAuthenticated ? (
+                      <Link
+                        to={`/jobs/${job._id}`}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md font-medium hover:bg-secondary/90 transition-colors text-sm whitespace-nowrap"
+                      >
+                        <Eye className="h-4 w-4" />
+                        Details
+                      </Link>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="text-sm w-full justify-center gap-2"
+                        onClick={() => {
+                          setSelectedJobForAuth({ id: job._id, title: job.title });
+                          setAuthModalOpen(true);
+                        }}
+                      >
+                        <Eye className="h-4 w-4" />
+                        Details
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -433,6 +470,14 @@ export default function AllJobsPage() {
           </Button>
         </div>
       )}
+
+      {/* Auth Required Modal */}
+      <AuthRequiredModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        jobTitle={selectedJobForAuth?.title}
+        redirectPath={selectedJobForAuth ? `/jobs/${selectedJobForAuth.id}` : '/all-jobs'}
+      />
     </div>
   );
 }
