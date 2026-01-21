@@ -80,10 +80,10 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-4 sm:space-y-6 w-full max-w-2xl mx-auto px-2 sm:px-0">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Profile</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Manage your profile information and preferences.
         </p>
       </div>
@@ -92,12 +92,12 @@ export default function ProfilePage() {
       <ResumeUpload />
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <User className="h-4 w-4 sm:h-5 sm:w-5" />
             Personal Information
           </CardTitle>
-          <CardDescription>Update your personal details</CardDescription>
+          <CardDescription className="text-xs sm:text-sm">Update your personal details</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

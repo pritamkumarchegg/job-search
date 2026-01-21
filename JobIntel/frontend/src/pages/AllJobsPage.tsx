@@ -180,11 +180,11 @@ export default function AllJobsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-8 border border-border">
-        <h1 className="text-4xl font-bold mb-2">All Available Jobs</h1>
-        <p className="text-muted-foreground">Browse all {allJobs.length} job opportunities from our database</p>
+      <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-4 sm:p-8 border border-border">
+        <h1 className="text-2xl sm:text-4xl font-bold mb-1 sm:mb-2">All Available Jobs</h1>
+        <p className="text-xs sm:text-base text-muted-foreground">Browse all {allJobs.length} job opportunities from our database</p>
       </div>
 
       {/* Search and Filters */}
@@ -214,7 +214,7 @@ export default function AllJobsPage() {
 
             {/* Filters Section */}
             {showFilters && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 border-t">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pt-4 border-t">
                 {/* Company Filter */}
                 <div className="space-y-3">
                   <Label className="font-semibold">Companies ({selectedCompanies.length})</Label>

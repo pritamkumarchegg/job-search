@@ -467,15 +467,15 @@ const DashboardPage = () => {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="matches">Job Matches</TabsTrigger>
-          <TabsTrigger value="applications">Applications</TabsTrigger>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+          <TabsTrigger value="matches" className="text-xs sm:text-sm">Matches</TabsTrigger>
+          <TabsTrigger value="applications" className="text-xs sm:text-sm hidden sm:block">Apps</TabsTrigger>
+          <TabsTrigger value="profile" className="text-xs sm:text-sm hidden sm:block">Profile</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-2 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Matched Jobs</CardTitle>
@@ -528,12 +528,12 @@ const DashboardPage = () => {
             </Card>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Job Matches</CardTitle>
+          <div className="grid gap-2 sm:gap-4 grid-cols-1 md:grid-cols-2">
+            <Card className="overflow-auto">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base sm:text-lg">Recent Job Matches</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-x-auto">
                 {matchedJobs.length > 0 ? (
                   <div className="space-y-4">
                     {matchedJobs.slice(0, 3).map((job: any) => (

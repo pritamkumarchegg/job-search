@@ -109,9 +109,9 @@ export default function AdminAnalytics() {
 
   if (error) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Analytics</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Analytics</h1>
           <p className="text-muted-foreground">Monitor job trends and application metrics</p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
@@ -148,7 +148,7 @@ export default function AdminAnalytics() {
       {/* Visitor Metrics */}
       <div>
         <h2 className="text-xl font-semibold text-foreground mb-4">Visitor Tracking</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-2 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -312,7 +312,7 @@ export default function AdminAnalytics() {
       {/* Job Metrics */}
       <div>
         <h2 className="text-xl font-semibold text-foreground mb-4">Job Metrics</h2>
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-2 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Jobs</CardTitle>

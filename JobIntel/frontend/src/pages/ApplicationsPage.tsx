@@ -88,10 +88,10 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">My Applications</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">My Applications</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Track all your job applications in one place.
         </p>
       </div>
@@ -105,36 +105,36 @@ export default function ApplicationsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {applications.map((app) => (
             <Card key={app.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
+              <CardContent className="pt-4 sm:pt-6">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-0">
+                  <div className="flex-1 min-w-0">
                     <Link to={`/jobs/${app.jobId}`} className="group">
-                      <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
+                      <h3 className="text-base sm:text-lg font-semibold group-hover:text-primary transition-colors break-words">
                         {app.jobTitle || 'Job Title'}
                       </h3>
                     </Link>
-                    <div className="flex items-center gap-4 mt-2 text-muted-foreground text-sm">
-                      <div className="flex items-center gap-1">
-                        <Building2 className="h-4 w-4" />
-                        {app.company || 'Company'}
+                    <div className="flex flex-col gap-2 mt-2 text-xs sm:text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <Building2 className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                        <span className="break-words">{app.company || 'Company'}</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        {app.location || 'Location'}
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                        <span className="break-words">{app.location || 'Location'}</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : 'Recently'}
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                        <span>{app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : 'Recently'}</span>
                       </div>
                     </div>
                     <div className="mt-3">
                       {getStatusBadge(app.status)}
                     </div>
                   </div>
-                  <div className="ml-4">
+                  <div className="flex-shrink-0">
                     {getStatusIcon(app.status)}
                   </div>
                 </div>

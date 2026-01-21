@@ -119,15 +119,15 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back, Admin. Here's what's happening today.</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-xs sm:text-base text-muted-foreground">Welcome back, Admin. Here's what's happening today.</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-2 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4\">
         <StatsCard
           title="Total Jobs"
           value={formatNumber(stats?.totalJobs || 0)}
