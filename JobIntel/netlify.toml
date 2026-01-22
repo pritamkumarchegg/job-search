@@ -2,7 +2,9 @@
 # Deployment: https://jobintel.netlify.app
 
 [build]
-  command = "npm ci && npm run build --workspace=frontend"
+  # Install with dev dependencies so Vite (a devDependency) is available,
+  # then run the build with production env.
+  command = "NODE_ENV=development npm ci && NODE_ENV=production npm run build --workspace=frontend"
   publish = "frontend/dist"
   base = "JobIntel"
 
@@ -14,10 +16,12 @@
 
 # Cache settings
 [context.production]
-  command = "npm ci && npm run build -w frontend"
+  # Ensure dev deps are installed in preview builds too
+  command = "NODE_ENV=development npm ci && NODE_ENV=production npm run build -w frontend"
 
 [context.preview]
-  command = "npm ci && npm run build -w frontend"
+  # Ensure dev deps are installed for branch deploys
+  command = "NODE_ENV=development npm ci && NODE_ENV=production npm run build -w frontend"
 
 [context.branch-deploy]
   command = "npm ci && npm run build -w frontend"
