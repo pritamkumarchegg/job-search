@@ -83,6 +83,7 @@ const DashboardPage = () => {
   console.log('🔍 [DashboardPage] Backend base URL:', backendBase);
 
   const [matchedJobs, setMatchedJobs] = useState<any[]>([]);
+  const [totalMatchedJobsCount, setTotalMatchedJobsCount] = useState(0); // Total count from database at current threshold
   const [profileFields, setProfileFields] = useState<any[]>([]);
   const appStore = useApplicationStore();
   console.log('🔍 [DashboardPage] Application store state:', { applicationsCount: Object.keys(appStore.applications || {}).length });
@@ -235,7 +236,10 @@ const DashboardPage = () => {
     const fetchMatches = async () => {
       try {
         const base = backendBase ? backendBase.replace(/\/$/, '') : '';
-        const url = base ? `${base}/api/matching/my-jobs?limit=3` : '/api/matching/my-jobs?limit=3';
+        // Use the AI matching endpoint to get best-fit jobs
+        const url = base 
+          ? `${base}/api/ai/best-fit-jobs/${user.id}?page=1&limit=50` 
+          : `/api/ai/best-fit-jobs/${user.id}?page=1&limit=50`;
         console.log('🔍 [DashboardPage] Fetching matched jobs from URL:', url);
 
         const token = localStorage.getItem('token');
@@ -265,9 +269,29 @@ const DashboardPage = () => {
           return;
         }
 
-        const jobsArray = Array.isArray(data) ? data.slice(0, 10) : (data.matches || []).slice(0, 10);
-        console.log('🔍 [DashboardPage] Setting matched jobs:', jobsArray.length, 'jobs');
+        // Extract jobs from the response
+        // The API returns: { success: true, data: [...jobs], pagination: {...totalMatches, minScore, ...} }
+        let jobsArray: any[] = [];
+        let totalCount = 0;
+        
+        if (Array.isArray(data)) {
+          jobsArray = data;
+        } else if (data.data && Array.isArray(data.data)) {
+          jobsArray = data.data;
+        } else if (data.jobs && Array.isArray(data.jobs)) {
+          jobsArray = data.jobs;
+        }
+        
+        // Get total count from pagination if available
+        if (data.pagination?.totalMatches) {
+          totalCount = data.pagination.totalMatches;
+        } else {
+          totalCount = jobsArray.length;
+        }
+        
+        console.log('🔍 [DashboardPage] Setting matched jobs:', jobsArray.length, 'jobs (total:', totalCount, 'at', data.pagination?.minScore || 70, '%)');
         setMatchedJobs(jobsArray);
+        setTotalMatchedJobsCount(totalCount);
       } catch (e) {
         console.error('🔍 [DashboardPage] Failed to fetch matched jobs:', e);
       }
@@ -560,9 +584,9 @@ const DashboardPage = () => {
                 <Briefcase className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{matchedJobs.length}</div>
+                <div className="text-2xl font-bold">{totalMatchedJobsCount || matchedJobs.length}</div>
                 <p className="text-xs text-muted-foreground">
-                  Jobs that match your profile
+                  Jobs that match your profile (≥70%)
                 </p>
               </CardContent>
             </Card>
@@ -667,7 +691,7 @@ const DashboardPage = () => {
                 <CardTitle className="text-base sm:text-lg">Recent Job Matches</CardTitle>
               </CardHeader>
               <CardContent className="overflow-x-auto">
-                {matchedJobs.length > 0 ? (
+                {matchedJobs && Array.isArray(matchedJobs) && matchedJobs.length > 0 ? (
                   <div className="space-y-4">
                     {matchedJobs.slice(0, 3).map((job: any) => (
                       <div key={job._id} className="flex items-center space-x-4">
@@ -733,11 +757,20 @@ const DashboardPage = () => {
                           <p className="text-sm text-muted-foreground">{job.company}</p>
                           <p className="text-sm">{job.location}</p>
                           <div className="flex flex-wrap gap-1 mt-2">
-                            {job.skills?.slice(0, 3).map((skill: string) => (
-                              <Badge key={skill} variant="secondary" className="text-xs">
-                                {skill}
-                              </Badge>
-                            ))}
+                            {job.skills?.matched && Array.isArray(job.skills.matched) 
+                              ? job.skills.matched.slice(0, 3).map((skill: string) => (
+                                  <Badge key={skill} variant="secondary" className="text-xs">
+                                    {skill}
+                                  </Badge>
+                                ))
+                              : job.skills?.missing && Array.isArray(job.skills.missing)
+                                ? job.skills.missing.slice(0, 3).map((skill: string) => (
+                                    <Badge key={skill} variant="secondary" className="text-xs bg-yellow-100">
+                                      {skill}
+                                    </Badge>
+                                  ))
+                                : null
+                            }
                           </div>
                         </div>
                         <Button size="sm">Apply Now</Button>
