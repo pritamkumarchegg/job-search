@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: jobintel-backend
+    runtime: node
+    buildCommand: "npm ci && npm run build -w backend"
+    startCommand: "npm start --prefix backend"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PORT
+        value: 5000
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_SECRET_KEY
+        sync: false
+    healthCheckPath: /api/health
+    healthCheckInterval: 300

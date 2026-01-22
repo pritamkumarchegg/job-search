@@ -7,6 +7,7 @@ export interface IJob extends mongoose.Document {
   companyId?: mongoose.Types.ObjectId;
   title: string;
   location?: string;
+  country?: string;
   employmentType?: string;
   description?: string;
   requirements?: string[];
@@ -31,6 +32,7 @@ const JobSchema = new Schema<IJob>(
     companyId: { type: Schema.Types.ObjectId, ref: "Company" },
     title: { type: String, required: true, index: true },
     location: String,
+    country: { type: String, index: true, default: 'India' },
     employmentType: String,
     description: String,
     requirements: [String],

@@ -23,6 +23,7 @@ interface Job {
   _id: string;
   title: string;
   location?: string;
+  country?: string;
   source?: string;
   status?: string;
   applyUrl?: string;
@@ -51,6 +52,7 @@ export default function AllJobsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+  const [selectedCountries, setSelectedCountries] = useState<string[]>(['India']); // Default to India
   const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([]);
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -98,6 +100,42 @@ export default function AllJobsPage() {
     () => [...new Set(allJobs.map((j) => j.location || 'Not specified'))].filter(Boolean).sort(),
     [allJobs]
   );
+  const countries = useMemo(
+    () => {
+      const countrySet = new Set<string>();
+      allJobs.forEach((job) => {
+        // Try to get country from: job.country, meta.job_country, or location
+        let country = job.country;
+        if (!country && job.meta?.rawData?.job_country) {
+          country = job.meta.rawData.job_country;
+        }
+        if (!country && job.location) {
+          // Extract country from location like "Cary, North Carolina, US"
+          const parts = job.location.split(',').map(p => p.trim());
+          if (parts.length > 0) {
+            const lastPart = parts[parts.length - 1];
+            if (lastPart === 'US' || lastPart === 'USA') country = 'USA';
+            else if (lastPart === 'UK' || lastPart === 'GB') country = 'UK';
+            else if (lastPart === 'India' || lastPart === 'IN') country = 'India';
+            else country = lastPart;
+          }
+        }
+        if (!country) country = 'India'; // Default to India
+        if (country) countrySet.add(country);
+      });
+      return Array.from(countrySet).sort((a, b) => {
+        // Put India first, then USA, then UK
+        if (a === 'India') return -1;
+        if (b === 'India') return 1;
+        if (a === 'USA') return -1;
+        if (b === 'USA') return 1;
+        if (a === 'UK') return -1;
+        if (b === 'UK') return 1;
+        return a.localeCompare(b);
+      });
+    },
+    [allJobs]
+  );
   const sources = useMemo(
     () => [...new Set(allJobs.map((j) => j.source || 'Unknown'))].filter(Boolean).sort(),
     [allJobs]
@@ -136,6 +174,28 @@ export default function AllJobsPage() {
       );
     }
 
+    // Country filter (required - defaults to India)
+    if (selectedCountries.length > 0) {
+      filtered = filtered.filter((job) => {
+        let jobCountry = job.country;
+        if (!jobCountry && job.meta?.rawData?.job_country) {
+          jobCountry = job.meta.rawData.job_country;
+        }
+        if (!jobCountry && job.location) {
+          const parts = job.location.split(',').map(p => p.trim());
+          if (parts.length > 0) {
+            const lastPart = parts[parts.length - 1];
+            if (lastPart === 'US' || lastPart === 'USA') jobCountry = 'USA';
+            else if (lastPart === 'UK' || lastPart === 'GB') jobCountry = 'UK';
+            else if (lastPart === 'India' || lastPart === 'IN') jobCountry = 'India';
+            else jobCountry = lastPart;
+          }
+        }
+        if (!jobCountry) jobCountry = 'India';
+        return selectedCountries.includes(jobCountry);
+      });
+    }
+
     // Job Type filter
     if (selectedJobTypes.length > 0) {
       filtered = filtered.filter((job) =>
@@ -151,7 +211,7 @@ export default function AllJobsPage() {
     }
 
     return filtered;
-  }, [allJobs, searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, remoteOnly]);
+  }, [allJobs, searchQuery, selectedCompanies, selectedLocations, selectedCountries, selectedJobTypes, remoteOnly]);
 
   // Pagination
   const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
@@ -161,12 +221,13 @@ export default function AllJobsPage() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCompanies, selectedLocations, selectedJobTypes, remoteOnly]);
+  }, [searchQuery, selectedCompanies, selectedLocations, selectedCountries, selectedJobTypes, remoteOnly]);
 
   const resetFilters = () => {
     setSearchQuery('');
     setSelectedCompanies([]);
     setSelectedLocations([]);
+    setSelectedCountries(['India']); // Reset to India
     setSelectedJobTypes([]);
     setRemoteOnly(false);
     setCurrentPage(1);
@@ -215,7 +276,35 @@ export default function AllJobsPage() {
 
             {/* Filters Section */}
             {showFilters && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pt-4 border-t">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pt-4 border-t">
+                {/* Country Filter */}
+                <div className="space-y-3">
+                  <Label className="font-semibold">Country ({selectedCountries.length})</Label>
+                  <div className="max-h-40 overflow-y-auto space-y-2">
+                    {countries.map((country) => (
+                      <div key={country} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`country-${country}`}
+                          checked={selectedCountries.includes(country)}
+                          onCheckedChange={(checked) => {
+                            setSelectedCountries(
+                              checked
+                                ? [...selectedCountries, country]
+                                : selectedCountries.filter((c) => c !== country)
+                            );
+                          }}
+                        />
+                        <Label htmlFor={`country-${country}`} className="text-sm cursor-pointer">
+                          {country === 'India' && <span className="font-semibold">🇮🇳 </span>}
+                          {country === 'USA' && <span className="font-semibold">🇺🇸 </span>}
+                          {country === 'UK' && <span className="font-semibold">🇬🇧 </span>}
+                          {country}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Company Filter */}
                 <div className="space-y-3">
                   <Label className="font-semibold">Companies ({selectedCompanies.length})</Label>
@@ -311,7 +400,7 @@ export default function AllJobsPage() {
                 Showing {paginatedJobs.length} of {filteredJobs.length} jobs
                 {filteredJobs.length !== allJobs.length && ` (filtered from ${allJobs.length})`}
               </div>
-              {(searchQuery || selectedCompanies.length > 0 || selectedLocations.length > 0 || selectedJobTypes.length > 0 || remoteOnly) && (
+              {(searchQuery || selectedCompanies.length > 0 || selectedLocations.length > 0 || (selectedCountries.length > 0 && selectedCountries[0] !== 'India') || selectedJobTypes.length > 0 || remoteOnly) && (
                 <Button variant="ghost" size="sm" onClick={resetFilters}>
                   <X className="h-4 w-4 mr-1" />
                   Reset Filters
@@ -383,24 +472,39 @@ export default function AllJobsPage() {
                   {/* Action Buttons */}
                   <div className="flex gap-2 flex-col">
                     {job.applyUrl || job.applyLink ? (
-                      <JobApplyBlocker
-                        jobId={job._id}
-                        actionType="apply"
-                        onActionAllowed={() => {
-                          // Open the apply link in a new tab
-                          window.open(job.applyUrl || job.applyLink, '_blank', 'noopener,noreferrer');
-                        }}
-                      >
-                        <a
-                          href={job.applyUrl || job.applyLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors text-sm whitespace-nowrap"
-                        >
-                          <Briefcase className="h-4 w-4" />
-                          Apply Now
-                        </a>
-                      </JobApplyBlocker>
+                      <>
+                        {isAuthenticated ? (
+                          <JobApplyBlocker
+                            jobId={job._id}
+                            actionType="apply"
+                            onActionAllowed={() => {
+                              // Open the apply link in a new tab
+                              window.open(job.applyUrl || job.applyLink, '_blank', 'noopener,noreferrer');
+                            }}
+                          >
+                            <a
+                              href={job.applyUrl || job.applyLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors text-sm whitespace-nowrap"
+                            >
+                              <Briefcase className="h-4 w-4" />
+                              Apply Now
+                            </a>
+                          </JobApplyBlocker>
+                        ) : (
+                          <Button
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors text-sm whitespace-nowrap"
+                            onClick={() => {
+                              setSelectedJobForAuth({ id: job._id, title: job.title });
+                              setAuthModalOpen(true);
+                            }}
+                          >
+                            <Briefcase className="h-4 w-4" />
+                            Apply Now
+                          </Button>
+                        )}
+                      </>
                     ) : (
                       <button
                         disabled
