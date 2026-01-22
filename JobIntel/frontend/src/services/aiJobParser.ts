@@ -141,8 +141,16 @@ export const parseJobText = (rawText: string): ParsedJobData => {
     });
   }
 
-  // Generate description from raw text
-  const description = rawText.substring(0, 500) + (rawText.length > 500 ? '...' : '');
+  // Generate description from raw text WITHOUT apply links
+  let descriptionText = rawText;
+  // Remove all URLs from description
+  descriptionText = descriptionText.replace(/(https?:\/\/[^\s)]+)/gi, '').trim();
+  // Remove "Application Link:", "Apply Link:", etc.
+  descriptionText = descriptionText.replace(/(?:Application\s+Link|Apply\s+Link|🔗)[:\-]?\s*/gi, '').trim();
+  // Clean up extra whitespace and newlines
+  descriptionText = descriptionText.replace(/\n\n+/g, '\n').trim();
+  
+  const description = descriptionText.substring(0, 500) + (descriptionText.length > 500 ? '...' : '');
 
   // Extract first likely application link (look for URLs containing apply/jobs/ats or any URL)
   const urlRegex = /(https?:\/\/[^\s)]+)/gi;

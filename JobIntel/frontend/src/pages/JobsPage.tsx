@@ -385,6 +385,35 @@ const JobsPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Free User Banner */}
+      {user?.tier === 'free' && (
+        <div className="bg-yellow-50 border-b-2 border-yellow-300 px-4 py-3 sticky top-16 z-50">
+          <div className="container mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <p className="text-sm text-yellow-900 font-medium">
+                  ⚠️ Some jobs are locked because you are a free user. 
+                  <a 
+                    href="/premium" 
+                    className="underline font-semibold hover:text-yellow-800 ml-1"
+                  >
+                    Upgrade to Premium
+                  </a>
+                  {' '}or{' '}
+                  <a 
+                    href="https://www.linkedin.com/in/alok-kumar-singh-119481218/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline font-semibold hover:text-yellow-800"
+                  >
+                    Contact Admin on LinkedIn
+                  </a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Search Header */}
       <div className="bg-card border-b border-border sticky top-16 z-40">
         <div className="container mx-auto px-4 py-4">

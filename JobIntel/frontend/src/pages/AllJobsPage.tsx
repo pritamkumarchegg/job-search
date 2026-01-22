@@ -44,7 +44,7 @@ export default function AllJobsPage() {
   const jobsPerPage = 15;
 
   // Auth modal state
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [selectedJobForAuth, setSelectedJobForAuth] = useState<{ id: string; title: string } | null>(null);
 
@@ -243,6 +243,33 @@ export default function AllJobsPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Free User Banner */}
+      {user?.tier === 'free' && (
+        <div className="bg-yellow-50 border-b-2 border-yellow-300 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1">
+              <p className="text-sm text-yellow-900 font-medium">
+                ⚠️ Some jobs are locked because you are a free user. 
+                <a 
+                  href="/premium" 
+                  className="underline font-semibold hover:text-yellow-800 ml-1"
+                >
+                  Upgrade to Premium
+                </a>
+                {' '}or{' '}
+                <a 
+                  href="https://www.linkedin.com/in/alok-kumar-singh-119481218/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="underline font-semibold hover:text-yellow-800"
+                >
+                  Contact Admin on LinkedIn
+                </a>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-4 sm:p-8 border border-border">
         <h1 className="text-2xl sm:text-4xl font-bold mb-1 sm:mb-2">All Available Jobs</h1>

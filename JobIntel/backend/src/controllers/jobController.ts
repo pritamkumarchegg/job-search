@@ -124,8 +124,16 @@ export async function parseJobText(req: Request, res: Response) {
       batch.forEach((b) => { if (b && !tags.includes(b)) tags.push(b); });
     }
 
-    // Generate description from raw text
-    const description = rawText.substring(0, 500) + (rawText.length > 500 ? "..." : "");
+    // Generate description from raw text (WITHOUT apply links)
+    let descriptionText = rawText;
+    // Remove all URLs from description
+    descriptionText = descriptionText.replace(/(https?:\/\/[^\s)]+)/gi, '').trim();
+    // Remove "Application Link:", "Apply Link:", etc.
+    descriptionText = descriptionText.replace(/(?:Application\s+Link|Apply\s+Link|🔗)[:\-]?\s*/gi, '').trim();
+    // Clean up extra whitespace
+    descriptionText = descriptionText.replace(/\n\n+/g, '\n').trim();
+    
+    const description = descriptionText.substring(0, 500) + (descriptionText.length > 500 ? "..." : "");
 
     // extract possible application link(s)
     const urlRegex = /(https?:\/\/[^\s)]+)/gi;

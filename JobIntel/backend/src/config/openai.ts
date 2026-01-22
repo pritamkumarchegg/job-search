@@ -67,75 +67,40 @@ Return ONLY a valid JSON object with these exact fields:
 }`;
 
 /**
- * MASTER PROMPT FOR JOB MATCHING
+ * MASTER PROMPT FOR JOB PARSING (Admin AI Parser)
  * 
- * This prompt instructs OpenAI to:
- * - Analyze job requirements
- * - Compare with candidate profile
- * - Generate match score (0-100)
- * - Provide detailed reasoning
- * - Identify skill gaps and strengths
+ * This prompt instructs OpenAI to parse raw job text and extract:
+ * - Job title, company, location
+ * - Experience requirements
+ * - Tech stack/skills
+ * - Apply link (SEPARATE from description)
+ * - Job description (WITHOUT the apply link)
  */
-export const JOB_MATCHING_PROMPT = `You are an expert recruiter matching candidates to jobs.
+export const JOB_PARSING_PROMPT = `You are an expert job parser. Extract structured job information from the provided text.
 
-Analyze the following:
+IMPORTANT: Extract the application/apply link as a SEPARATE field. DO NOT include the link in the description.
 
-CANDIDATE PROFILE:
-{candidate_profile}
-
-JOB DESCRIPTION:
-{job_description}
-
-Provide a detailed matching analysis in JSON format:
-
+Return ONLY a valid JSON object with these exact fields:
 {
-  "totalScore": <0-100 number>,
-  "skillsAlignment": <0-100 score for technical skills match>,
-  "roleAlignment": <0-100 score for job title/role match>,
-  "experienceAlignment": <0-100 score for experience level>,
-  "locationAlignment": <0-100 score for location preference>,
-  "companyFit": <0-100 score for cultural/domain fit>,
-  
-  "topReasons": [
-    "Reason 1 why this is a good fit",
-    "Reason 2",
-    "Reason 3"
-  ],
-  
-  "skillGaps": [
-    "Skill 1 that candidate is missing",
-    "Skill 2 that is required but candidate lacks"
-  ],
-  
-  "strengths": [
-    "Strength 1 relevant to this role",
-    "Strength 2 candidate brings"
-  ],
-  
-  "concerns": [
-    "Concern 1 about the fit",
-    "Concern 2 or blocker"
-  ],
-  
-  "recommendedNextSteps": [
-    "Action 1 candidate should take",
-    "Action 2 to prepare for this role"
-  ],
-  
-  "interviewTips": [
-    "Tip 1 for interview preparation",
-    "Tip 2 emphasizing strengths"
-  ],
-  
-  "summary": "1-2 sentence overall assessment of fit"
+  "jobTitle": "The job title",
+  "company": "Company name",
+  "location": "Job location (city, country)",
+  "salaryRange": "Salary or 'Not specified'",
+  "experienceLevel": "Fresher/0-1 years/Junior/Mid-level/Senior or similar",
+  "experienceYears": "Number of years required",
+  "employmentType": "Full-time, Part-time, Contract, Internship, etc.",
+  "techStack": ["Technology1", "Technology2", ...],
+  "requirements": ["Requirement1", "Requirement2", ...],
+  "applyUrl": "https://example.com/apply (ONLY the URL, extracted separately)",
+  "description": "Full job description WITHOUT the apply link URL"
 }
 
-IMPORTANT:
-- Be thorough but realistic
-- Consider experience level carefully
-- Look at domain/industry fit
-- Consider location and work preferences
-- Provide ONLY valid JSON, no markdown, no explanations`;
+CRITICAL RULES:
+1. Extract apply link to applyUrl field only
+2. Do NOT include "Application Link:" or URLs in the description
+3. Clean up the description - remove newlines, extra spaces
+4. Be precise with tech stack
+5. Return ONLY valid JSON`;
 
 /**
  * Call OpenAI API with retry logic

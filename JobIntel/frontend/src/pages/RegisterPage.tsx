@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuthStore } from '@/store/authStore';
-import { Zap, Mail, Lock, User, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Zap, Mail, Lock, User, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Upload, FileText, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const RegisterPage = () => {
@@ -13,6 +13,7 @@ const RegisterPage = () => {
   const location = useLocation();
   const { register, isLoading } = useAuthStore();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -22,6 +23,8 @@ const RegisterPage = () => {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState('');
   const [redirecting, setRedirecting] = useState(false);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [uploadingResume, setUploadingResume] = useState(false);
 
   // Get the redirect destination from location state
   const from = (location.state as any)?.from || '/dashboard';
@@ -31,6 +34,85 @@ const RegisterPage = () => {
     { label: 'Contains a number', met: /\d/.test(password) },
     { label: 'Contains uppercase letter', met: /[A-Z]/.test(password) },
   ];
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    // Validate file type
+    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!validTypes.includes(selectedFile.type)) {
+      setError('Please upload a PDF or DOCX file');
+      toast({
+        title: 'Invalid file type',
+        description: 'Please upload a PDF or DOCX file',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (selectedFile.size > 5 * 1024 * 1024) {
+      setError('File size must be less than 5MB');
+      toast({
+        title: 'File too large',
+        description: 'Maximum file size is 5MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setResumeFile(selectedFile);
+    setError('');
+  };
+
+  const handleRemoveResume = () => {
+    setResumeFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const uploadResume = async (token: string): Promise<boolean> => {
+    if (!resumeFile) return true; // Skip if no resume
+
+    try {
+      setUploadingResume(true);
+      const formData = new FormData();
+      formData.append('file', resumeFile);
+
+      const res = await fetch('/api/resume/upload', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        toast({
+          title: 'Resume uploaded!',
+          description: `Resume parsed and job matching started (${data.parsedResume?.skills?.length || 0} skills found)`,
+        });
+        return true;
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to upload resume');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to upload resume';
+      toast({
+        title: 'Resume upload failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      console.error('Resume upload error:', err);
+      return false;
+    } finally {
+      setUploadingResume(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,12 +141,28 @@ const RegisterPage = () => {
     const success = await register(email, password, name);
     
     if (success) {
+      // Get token from localStorage after registration
+      const token = localStorage.getItem('token');
+      
+      // Upload resume if provided
+      if (resumeFile && token) {
+        const resumeSuccess = await uploadResume(token);
+        if (!resumeSuccess) {
+          // Resume upload failed but account was created, show warning
+          toast({
+            title: 'Account created, but resume upload failed',
+            description: 'You can upload your resume later in your profile',
+            variant: 'destructive',
+          });
+        }
+      }
+
       toast({
         title: 'Account created!',
         description: 'Welcome to JobIntel. Start exploring jobs now.',
       });
       setRedirecting(true);
-      // Redirect to the job page after 2 seconds
+      // Redirect to dashboard after 2 seconds
       setTimeout(() => {
         navigate(from, { replace: true });
       }, 2000);
@@ -107,6 +205,52 @@ const RegisterPage = () => {
                 {error}
               </div>
             )}
+
+            {/* Resume Upload Section */}
+            <div className="space-y-2 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <Label className="flex items-center gap-2 text-sm font-semibold text-blue-900">
+                <Upload className="h-4 w-4" />
+                Upload Resume (Optional)
+              </Label>
+              <p className="text-xs text-blue-800">
+                Upload your resume now and we'll automatically find the best jobs for you. You can also do this later in your profile.
+              </p>
+              
+              {resumeFile ? (
+                <div className="flex items-center justify-between p-3 bg-white border border-blue-300 rounded">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium">{resumeFile.name}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveResume}
+                    className="text-destructive hover:bg-destructive/10 p-1 rounded"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.docx"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="resume-upload"
+                  />
+                  <label
+                    htmlFor="resume-upload"
+                    className="flex flex-col items-center justify-center w-full p-4 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer hover:bg-blue-50/50 transition-colors"
+                  >
+                    <Upload className="h-5 w-5 text-blue-600 mb-2" />
+                    <span className="text-sm font-medium text-blue-700">Click to upload</span>
+                    <span className="text-xs text-blue-600">PDF or DOCX (max 5MB)</span>
+                  </label>
+                </div>
+              )}
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
@@ -209,11 +353,16 @@ const RegisterPage = () => {
               </Label>
             </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={isLoading || redirecting}>
+            <Button type="submit" className="w-full" size="lg" disabled={isLoading || redirecting || uploadingResume}>
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Creating account...
+                </span>
+              ) : uploadingResume ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Uploading resume...
                 </span>
               ) : redirecting ? (
                 <span className="flex items-center gap-2">

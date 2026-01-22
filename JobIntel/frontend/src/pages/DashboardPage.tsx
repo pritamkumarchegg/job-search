@@ -89,6 +89,7 @@ const DashboardPage = () => {
   console.log('🔍 [DashboardPage] Application store state:', { applicationsCount: Object.keys(appStore.applications || {}).length });
 
   const [recentApplications, setRecentApplications] = useState<any[]>(Object.values(appStore.applications || {}));
+  const [minMatchScore, setMinMatchScore] = useState(70); // Dynamic threshold from admin settings
   console.log('🔍 [DashboardPage] Initial recent applications:', recentApplications.length);
   // Edit profile modal state (profile only)
   const [editProfileOpen, setEditProfileOpen] = useState(false);
@@ -292,6 +293,7 @@ const DashboardPage = () => {
         console.log('🔍 [DashboardPage] Setting matched jobs:', jobsArray.length, 'jobs (total:', totalCount, 'at', data.pagination?.minScore || 70, '%)');
         setMatchedJobs(jobsArray);
         setTotalMatchedJobsCount(totalCount);
+        setMinMatchScore(data.pagination?.minScore || 70);
       } catch (e) {
         console.error('🔍 [DashboardPage] Failed to fetch matched jobs:', e);
       }
@@ -556,6 +558,17 @@ const DashboardPage = () => {
           <p className="text-muted-foreground">
             Welcome back, {user?.name || 'User'}! Here's your job search overview.
           </p>
+          <p className="text-sm text-blue-600 mt-2">
+            💼 For premium access, connect with our admin on{' '}
+            <a
+              href="https://www.linkedin.com/in/alok-kumar-singh-119481218/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold hover:underline"
+            >
+              LinkedIn
+            </a>
+          </p>
         </div>
         <Button
           variant="destructive"
@@ -586,7 +599,7 @@ const DashboardPage = () => {
               <CardContent>
                 <div className="text-2xl font-bold">{totalMatchedJobsCount || matchedJobs.length}</div>
                 <p className="text-xs text-muted-foreground">
-                  Jobs that match your profile (≥70%)
+                  Jobs that match your profile (≥{minMatchScore}%)
                 </p>
               </CardContent>
             </Card>
@@ -773,7 +786,14 @@ const DashboardPage = () => {
                             }
                           </div>
                         </div>
-                        <Button size="sm">Apply Now</Button>
+                        <a 
+                          href={job.applyLink || job.applyUrl || '#'} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-accent text-accent-foreground hover:opacity-90 shadow-soft h-9 rounded-md px-4 text-sm"
+                        >
+                          Apply Now
+                        </a>
                       </div>
                     </div>
                   ))}

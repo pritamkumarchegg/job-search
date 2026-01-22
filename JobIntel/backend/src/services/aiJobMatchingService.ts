@@ -301,13 +301,13 @@ class AIJobMatchingService {
       score += 2; // Extra boost for entry-level targeted jobs
     }
 
-    // Normalize to 60-80% range
+    // ✅ FIXED: Map score to 0-100% range with proper differentiation
     // Max possible score: 6 + 5 + 4 + 3 + 2 = 20 points
-    // Map 0-20 points to 60-80% range
+    // Now properly map 0-20 points to 0-100% range
     const maxScore = 20;
-    const normalizedScore = 60 + (score / maxScore) * 20; // Maps 0-20 to 60-80
+    const normalizedScore = (score / maxScore) * 100; // Maps 0-20 to 0-100%
 
-    return Math.min(80, Math.max(60, normalizedScore)); // Ensure score is between 60-80
+    return Math.min(100, Math.max(0, normalizedScore)); // Ensure score is between 0-100
   }
 }
 
