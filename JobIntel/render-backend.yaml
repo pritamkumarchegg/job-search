@@ -32,10 +32,10 @@ services:
         # Generate random 32+ char string: openssl rand -base64 32
         
       - key: VITE_API_URL
-        value: https://jobintel-backend.onrender.com
+        value: https://jobintel-backend-aq4z.onrender.com
         
       - key: CORS_ORIGIN
-        value: https://jobintel.netlify.app
+        value: https://job-intel.netlify.app
         
       # Optional: GitHub OAuth
       - key: GITHUB_CLIENT_ID
@@ -45,7 +45,7 @@ services:
         sync: false
         
       - key: GITHUB_CALLBACK_URL
-        value: https://jobintel-backend.onrender.com/auth/github/callback
+        value: https://jobintel-backend-aq4z.onrender.com/auth/github/callback
         
       # Optional: Notification Services
       - key: TELEGRAM_BOT_TOKEN

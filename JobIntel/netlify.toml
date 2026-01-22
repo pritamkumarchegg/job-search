@@ -12,7 +12,7 @@
 [build.environment]
   NODE_VERSION = "20"
   NODE_ENV = "production"
-  VITE_API_URL = "https://jobintel-backend.onrender.com"
+  VITE_API_URL = "https://jobintel-backend-aq4z.onrender.com"
 
 # Cache settings
 [context.production]
@@ -40,7 +40,7 @@
     X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self' https:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https://jobintel-backend.onrender.com"
+    Content-Security-Policy = "default-src 'self' https:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https://jobintel-backend-aq4z.onrender.com"
 
 # Asset caching - aggressive for production
 [[headers]]
