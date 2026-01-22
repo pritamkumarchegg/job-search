@@ -57,14 +57,39 @@ if (corsOrigin) {
     .map((s) => s.trim().replace(/\/$/, ''))
     .filter(Boolean);
 
+  const isAllowed = (origin?: string) => {
+    if (!origin) return false;
+    if (origin === '*') return true;
+    try {
+      const originNorm = origin.replace(/\/$/, '');
+      const originHost = new URL(originNorm).hostname;
+
+      for (const o of origins) {
+        if (o === '*') return true;
+        if (o.startsWith('*.')) {
+          // wildcard host match, e.g. *.netlify.app
+          const suffix = o.slice(1); // .netlify.app
+          if (originHost.endsWith(suffix)) return true;
+        } else if (o.startsWith('http')) {
+          if (originNorm === o) return true;
+        } else {
+          // treat as hostname
+          if (originHost === o) return true;
+        }
+      }
+    } catch (e) {
+      return false;
+    }
+    return false;
+  };
+
   app.use((req, res, next) => {
     const origin = req.headers.origin as string | undefined;
-    const originNorm = origin ? origin.replace(/\/$/, '') : undefined;
-    if (origin && (origin === '*' || (originNorm && origins.includes(originNorm)))) {
-      res.setHeader('Access-Control-Allow-Origin', origin === '*' ? '*' : origin);
+    if (origin && isAllowed(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Access-Control-Allow-Credentials', 'true');
       res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
     }
     if (req.method === 'OPTIONS') return res.sendStatus(204);
     next();
@@ -74,8 +99,7 @@ if (corsOrigin) {
     cors({
       origin: (origin, callback) => {
         if (!origin) return callback(null, true);
-        const originNorm = (origin as string).replace(/\/$/, '');
-        if (origin === '*' || origins.includes(originNorm)) return callback(null, true);
+        if (isAllowed(origin as string)) return callback(null, true);
         return callback(null, false);
       },
       credentials: true,
