@@ -324,6 +324,7 @@ async function start() {
     // 5. Start Express Server
     server = app.listen(PORT, () => {
       log(`✓ Backend listening on http://localhost:${PORT}`);
+      log(`
 ╔════════════════════════════════════════╗
 ║     JobIntel Backend - Phase 1         ║
 ║     🚀 Server Started Successfully    ║
