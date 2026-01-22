@@ -17,7 +17,7 @@ export async function canPerformAction(req: AuthRequest, res: Response) {
       return res.status(400).json({ error: 'Missing or invalid parameters' });
     }
 
-    const ipAddr = req.ip as any;
+    const ipAddr = (req as Request).ip as any;
     const ipAddress: string | undefined = Array.isArray(ipAddr) ? ipAddr[0] : (typeof ipAddr === 'string' ? ipAddr : undefined);
     const permission = await checkActionPermission(user._id, jobId, actionType as 'apply' | 'viewDetails', ipAddress);
 
@@ -43,7 +43,7 @@ export async function recordAction(req: AuthRequest, res: Response) {
       return res.status(400).json({ error: 'Missing or invalid parameters' });
     }
 
-    const ipAddr = req.ip as any;
+    const ipAddr = (req as Request).ip as any;
     const ipAddress: string | undefined = Array.isArray(ipAddr) ? ipAddr[0] : (typeof ipAddr === 'string' ? ipAddr : undefined);
 
     // Check permission first
