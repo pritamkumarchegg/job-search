@@ -74,3 +74,31 @@ export const getUser = async (req: Request, res: Response) => {
     return res.status(500).json({ error: err?.message || 'server error' });
   }
 };
+
+export const searchUsers = async (req: Request, res: Response) => {
+  try {
+    const query = req.query.q as string;
+    
+    if (!query || query.trim().length < 2) {
+      return res.json([]);
+    }
+
+    // Search by email or name
+    const users = await User.find(
+      {
+        $or: [
+          { email: { $regex: query, $options: 'i' } },
+          { name: { $regex: query, $options: 'i' } }
+        ]
+      },
+      { email: 1, name: 1, tier: 1 }
+    )
+      .limit(10)
+      .lean();
+
+    return res.json(users);
+  } catch (err: any) {
+    console.error('searchUsers error', err);
+    return res.status(500).json({ error: err?.message || 'server error' });
+  }
+};

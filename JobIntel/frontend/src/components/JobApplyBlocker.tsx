@@ -74,20 +74,20 @@ const JobApplyBlocker: React.FC<JobApplyBlockerProps> = ({
   }, [jobId, actionType, isAuthenticated, user]);
 
   const handleClick = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    // Only prevent default for blocked users
+    if (!permission?.allowed) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
 
+    // For allowed users, don't prevent default - let the link work naturally
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
 
-    // If not allowed, don't do anything (tooltip will show on hover)
-    if (!permission?.allowed) {
-      return;
-    }
-
-    // Log the action
+    // Log the action in the background (don't block the link)
     try {
       const base = import.meta.env.VITE_API_URL || '';
       const url = base
@@ -98,17 +98,14 @@ const JobApplyBlocker: React.FC<JobApplyBlockerProps> = ({
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const response = await fetch(url, {
+      await fetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify({ jobId, actionType }),
       });
-
-      if (response.ok) {
-        onActionAllowed?.();
-      }
     } catch (err) {
       console.error('Error logging action:', err);
+      // Don't throw - allow link to work even if logging fails
     }
   };
 
@@ -119,16 +116,16 @@ const JobApplyBlocker: React.FC<JobApplyBlockerProps> = ({
   // If user is not authenticated, render children as-is
   if (!isAuthenticated) {
     return (
-      <div onClick={handleClick} className="inline-block cursor-pointer">
+      <div className="inline-block cursor-pointer">
         {children}
       </div>
     );
   }
 
-  // If user is premium, render children as-is
-  if (permission?.allowed) {
+  // If permission is allowed or still loading, render children as-is (clickable)
+  if (permission?.allowed || loading) {
     return (
-      <div onClick={handleClick} className="inline-block cursor-pointer">
+      <div className="inline-block cursor-pointer" onClick={handleClick}>
         {children}
       </div>
     );

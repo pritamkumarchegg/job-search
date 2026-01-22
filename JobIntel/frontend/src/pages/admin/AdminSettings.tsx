@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
+import { AlertCircle, CheckCircle, Trash2, Search } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
 
 // Helper to get auth token from localStorage
 function getAuthToken() {
@@ -15,6 +16,8 @@ function getAuthToken() {
 }
 
 export default function AdminSettings() {
+  const { updateUserFromBackend } = useAuthStore();
+  
   const [settings, setSettings] = useState({
     appName: 'JobIntel',
     appUrl: 'https://jobintel.com',
@@ -30,6 +33,7 @@ export default function AdminSettings() {
     // Manual premium access
     manualPremiumEmail: '',
     manualPremiumUsers: [] as string[],
+    manualPremiumSuggestions: [] as string[], // NEW: Suggestions
   });
 
   const [saved, setSaved] = useState(false);
@@ -166,13 +170,23 @@ export default function AdminSettings() {
         throw new Error(data.error || 'Failed to grant premium access');
       }
 
+      const result = await response.json();
+
       // Add to list
       const updated = [...settings.manualPremiumUsers, settings.manualPremiumEmail.toLowerCase()];
       setSettings(prev => ({
         ...prev,
         manualPremiumUsers: updated,
         manualPremiumEmail: '',
+        manualPremiumSuggestions: [],
       }));
+      
+      // If this was the admin's own account, update their tier
+      const authUser = useAuthStore.getState().user;
+      if (authUser && authUser.email?.toLowerCase() === settings.manualPremiumEmail.toLowerCase()) {
+        updateUserFromBackend({ tier: 'premium' });
+      }
+      
       setSuccessMessage(`${settings.manualPremiumEmail} granted premium access!`);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -180,6 +194,35 @@ export default function AdminSettings() {
       setError(err.message || 'Failed to grant premium access');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Search users for autocomplete
+  const handleSearchUsers = async (query: string) => {
+    if (!query.trim()) {
+      setSettings(prev => ({ ...prev, manualPremiumSuggestions: [] }));
+      return;
+    }
+
+    try {
+      const token = getAuthToken();
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`, {
+        headers,
+      });
+
+      if (response.ok) {
+        const users = await response.json();
+        const suggestions = users
+          .map((u: any) => u.email)
+          .filter((email: string) => !settings.manualPremiumUsers.includes(email.toLowerCase()))
+          .slice(0, 5); // Limit to 5 suggestions
+        setSettings(prev => ({ ...prev, manualPremiumSuggestions: suggestions }));
+      }
+    } catch (err) {
+      console.error('Search failed:', err);
     }
   };
 
@@ -415,21 +458,47 @@ export default function AdminSettings() {
           {/* Add User Form */}
           <div className="space-y-3 p-3 bg-muted rounded-lg">
             <label className="text-sm font-medium">Add User to Premium (by Email)</label>
-            <div className="flex flex-col md:flex-row gap-2">
-              <Input
-                type="email"
-                placeholder="user@example.com"
-                value={settings.manualPremiumEmail}
-                onChange={(e) => {
-                  setSettings(prev => ({ ...prev, manualPremiumEmail: e.target.value }));
-                  setError('');
-                }}
-                className="flex-1 text-sm"
-              />
+            <div className="relative flex flex-col md:flex-row gap-2">
+              <div className="relative flex-1">
+                <Input
+                  type="email"
+                  placeholder="type email... (e.g., user@example.com)"
+                  value={settings.manualPremiumEmail}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSettings(prev => ({ ...prev, manualPremiumEmail: val }));
+                    if (val.length > 2) handleSearchUsers(val);
+                    setError('');
+                  }}
+                  className="flex-1 text-sm"
+                  autoComplete="off"
+                />
+                {/* Search suggestions dropdown */}
+                {settings.manualPremiumSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-10 max-h-48 overflow-y-auto">
+                    {settings.manualPremiumSuggestions.map((email, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          setSettings(prev => ({
+                            ...prev,
+                            manualPremiumEmail: email,
+                            manualPremiumSuggestions: [],
+                          }));
+                        }}
+                        className="p-2 hover:bg-blue-50 cursor-pointer text-sm text-gray-700"
+                      >
+                        <Search className="h-4 w-4 inline mr-2 text-gray-400" />
+                        {email}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               <Button
                 onClick={handleAddManualPremium}
                 className="w-full md:w-auto text-sm"
-                disabled={!settings.manualPremiumEmail.trim()}
+                disabled={!settings.manualPremiumEmail.trim() || loading}
               >
                 Add User
               </Button>

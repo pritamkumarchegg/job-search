@@ -33,6 +33,7 @@ import {
   deleteSetting,
   grantManualPremium,
   revokeManualPremium,
+  searchUsers,
 } from '../controllers/adminSettingsController';
 
 const router = express.Router();
@@ -82,5 +83,8 @@ router.delete('/settings/:key', authenticateToken, requireRole('admin'), deleteS
 // Manual premium access
 router.post('/grant-premium', authenticateToken, requireRole('admin'), grantManualPremium);
 router.post('/revoke-premium', authenticateToken, requireRole('admin'), revokeManualPremium);
+
+// User search
+router.get('/users/search', authenticateToken, requireRole('admin'), searchUsers);
 
 export default router;
