@@ -9,10 +9,7 @@ import { NotificationLog } from '../models/NotificationLog';
 import { Revenue } from '../models/Revenue';
 import { User } from '../models/User';
 import { Application } from '../models/Application';
-
-interface AuthRequest extends Request {
-  user?: { id: string; email: string };
-}
+import { AuthRequest } from '../middleware/auth';
 
 // Get dashboard statistics
 export async function getAdminStats(_req: Request, res: Response) {

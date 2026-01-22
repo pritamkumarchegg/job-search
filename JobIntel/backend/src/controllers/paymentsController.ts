@@ -4,10 +4,7 @@ import crypto from 'crypto';
 import { Payment } from '../models/Payment';
 import { Subscription } from '../models/Subscription';
 import { User } from '../models/User';
-
-interface AuthRequest extends Request {
-  user?: { id: string; email: string; _id?: string };
-}
+import { AuthRequest } from '../middleware/auth';
 
 const key_id = process.env.RAZORPAY_KEY_ID;
 const key_secret = process.env.RAZORPAY_KEY_SECRET;

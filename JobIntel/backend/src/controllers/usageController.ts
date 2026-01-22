@@ -1,9 +1,6 @@
 import { Request, Response } from 'express';
 import { checkActionPermission, logAction, getUserUsageStats } from '../services/usageTrackingService';
-
-interface AuthRequest extends Request {
-  user?: { id: string; email: string; _id?: string };
-}
+import { AuthRequest } from '../middleware/auth';
 
 /**
  * Check if user can perform an action (apply/view details)

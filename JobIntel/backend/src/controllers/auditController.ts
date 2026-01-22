@@ -1,10 +1,7 @@
 import { Request, Response } from 'express';
 import { AuditLog } from '../models/AuditLog';
 import { logger } from '../utils/logger';
-
-interface AuthRequest extends Request {
-  user?: any;
-}
+import { AuthRequest } from '../middleware/auth';
 
 /**
  * Get audit logs with filtering and pagination
