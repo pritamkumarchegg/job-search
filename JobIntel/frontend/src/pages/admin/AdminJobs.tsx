@@ -123,7 +123,6 @@ export default function AdminJobs() {
       if (response.ok) {
         const jobs = await response.json();
         setBackendJobs(jobs || []);
-        console.debug('Admin: fetched', Array.isArray(jobs) ? jobs.length : 0, 'backend jobs from admin endpoint');
       } else {
         setBackendJobs([]);
         setBackendError(`Status ${response.status}`);
@@ -368,7 +367,6 @@ export default function AdminJobs() {
     const result = backendJobs.length > 0 
       ? fromBackend.sort((a, b) => new Date(b.postedAt || 0).getTime() - new Date(a.postedAt || 0).getTime())
       : [...adminJobs, ...fromPublished].sort((a, b) => new Date(b.postedAt || 0).getTime() - new Date(a.postedAt || 0).getTime());
-    console.debug('Admin: combined jobs counts', { mock: adminJobs.length, published: fromPublished.length, backend: fromBackend.length, total: result.length });
     return result;
   }, [publishedJobs, backendJobs]);
 
@@ -438,7 +436,6 @@ export default function AdminJobs() {
         });
         if (response.ok) {
           const created = await response.json();
-          console.log('Job published to backend', created._id || created.id);
           // refresh backend jobs listing in admin
           fetchBackendJobs();
           setIsPreviewOpen(false);
@@ -454,7 +451,6 @@ export default function AdminJobs() {
           throw new Error(`Backend returned ${response.status} ${text}`);
         }
       } catch (backendErr) {
-        console.log('Backend not available or failed; not saving locally:', backendErr);
         toast({ title: 'Publish failed', description: String(backendErr), variant: 'destructive' });
       }
     } catch (err) {

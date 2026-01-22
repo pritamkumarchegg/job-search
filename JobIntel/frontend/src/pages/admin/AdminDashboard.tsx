@@ -73,7 +73,6 @@ export default function AdminDashboard() {
         }
       } catch (err) {
         setError('Failed to fetch analytics data');
-        console.error(err);
       } finally {
         setLoading(false);
       }

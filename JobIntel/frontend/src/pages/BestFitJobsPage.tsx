@@ -80,7 +80,7 @@ export default function BestFitJobsPage() {
         setError('Failed to trigger matching');
       }
     } catch (err) {
-      console.error('Failed to trigger matching:', err);
+;
       setError('Failed to trigger matching');
     } finally {
       setTriggering(false);
@@ -111,7 +111,7 @@ export default function BestFitJobsPage() {
       if (res.ok) {
         const data = await res.json();
         const jobsData = data.data || [];
-        console.log(`✅ Best fit jobs loaded: ${jobsData.length} jobs`);
+;
         setJobs(jobsData);
         setPagination(data.pagination);
       } else if (res.status === 401) {
@@ -130,7 +130,7 @@ export default function BestFitJobsPage() {
         });
       }
     } catch (err) {
-      console.error('Failed to fetch best fit jobs:', err);
+;
       setError('Failed to load best fit jobs');
       toast({
         title: 'Error',

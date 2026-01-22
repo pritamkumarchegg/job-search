@@ -38,7 +38,7 @@ export default function SavedJobsPage() {
           setSavedJobs([]);
         }
       } catch (err) {
-        console.error('Failed to fetch saved jobs:', err);
+;
         toast({
           title: 'Error',
           description: 'Failed to load saved jobs',
@@ -84,7 +84,7 @@ export default function SavedJobsPage() {
         });
       }
     } catch (err) {
-      console.error('Failed to remove saved job:', err);
+;
       toast({
         title: 'Error',
         description: 'Failed to remove saved job',

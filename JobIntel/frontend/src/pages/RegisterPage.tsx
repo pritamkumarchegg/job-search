@@ -107,7 +107,7 @@ const RegisterPage = () => {
         description: errorMessage,
         variant: 'destructive',
       });
-      console.error('Resume upload error:', err);
+;
       return false;
     } finally {
       setUploadingResume(false);

@@ -10,7 +10,6 @@ export function useAnalytics() {
         ?.split('=')[1];
 
       if (!sessionId) {
-        console.debug('[Analytics] No session ID found');
         return;
       }
 
@@ -28,7 +27,6 @@ export function useAnalytics() {
         }),
       });
     } catch (error) {
-      console.debug('[Analytics] Failed to track event:', error);
     }
   }, []);
 

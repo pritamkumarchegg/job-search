@@ -50,7 +50,6 @@ export default function AdminRevenue() {
       }
     } catch (err) {
       setError('Failed to fetch revenue data. Please check your connection.');
-      console.error('Revenue fetch error:', err);
     } finally {
       setLoading(false);
     }

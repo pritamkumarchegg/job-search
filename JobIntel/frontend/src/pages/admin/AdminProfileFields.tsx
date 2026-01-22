@@ -20,7 +20,6 @@ export default function AdminProfileFields() {
     try {
       const res = await api('/profile-fields');
       if (res.ok) setFields(await res.json());
-      else console.error('Failed to load fields', await res.text());
     } finally { setLoading(false); }
   }
 

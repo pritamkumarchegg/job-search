@@ -75,7 +75,7 @@ const JobsPage = () => {
     try {
       const base = backendBase ? backendBase.replace(/\/$/, '') : '';
       const url = base ? `${base}/api/jobs?status=active` : '/api/jobs?status=active';
-      console.log('[JobsPage] Fetching jobs from:', url, '(backendBase:', backendBase, ')');
+;
       const response = await fetch(url, { cache: 'no-store' });
       if (response.ok) {
         try {
@@ -84,19 +84,19 @@ const JobsPage = () => {
           setHasBackendLoaded(true);
           console.debug('fetchJobs: retrieved', Array.isArray(jobs) ? jobs.length : 0, 'jobs from backend');
         } catch (jsonErr) {
-          console.warn('Backend returned invalid JSON, using local store only');
+;
           setBackendJobs([]);
           setHasBackendLoaded(true);
           setBackendError('Invalid JSON from backend');
         }
       } else {
-        console.warn(`Backend returned status ${response.status}, using local store only`);
+;
         setBackendJobs([]);
         setHasBackendLoaded(true);
         setBackendError(`Status ${response.status}`);
       }
     } catch (err: any) {
-      console.warn('Backend not available, using local store only:', err);
+;
       setBackendJobs([]);
       setHasBackendLoaded(true);
       setBackendError(err?.message || String(err));
@@ -117,7 +117,7 @@ const JobsPage = () => {
       apps.forEach((a: any) => { if (a.jobId) map[String(a.jobId)] = a; });
       appStore.setApplications(map);
     } catch (e) {
-      console.warn('failed to fetch user applications', e);
+;
     }
   };
 

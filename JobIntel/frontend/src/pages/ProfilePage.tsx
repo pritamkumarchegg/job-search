@@ -68,7 +68,7 @@ export default function ProfilePage() {
         throw new Error('Failed to update profile');
       }
     } catch (err) {
-      console.error('Failed to update profile:', err);
+;
       toast({
         title: 'Error',
         description: 'Failed to update profile',

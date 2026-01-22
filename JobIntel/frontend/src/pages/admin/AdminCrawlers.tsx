@@ -148,7 +148,6 @@ export default function AdminCrawlers() {
           }
         }
       } else {
-        console.error('Failed to load logs', await res.text());
       }
     } finally {
       setLoading(false);

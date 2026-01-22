@@ -52,7 +52,7 @@ export default function MessagesPage() {
           setMessages([]);
         }
       } catch (err) {
-        console.error('Failed to fetch messages:', err);
+;
         toast({
           title: 'Error',
           description: 'Failed to load messages',
@@ -102,7 +102,7 @@ export default function MessagesPage() {
         });
       }
     } catch (err) {
-      console.error('Failed to send reply:', err);
+;
       toast({
         title: 'Error',
         description: 'Failed to send reply',

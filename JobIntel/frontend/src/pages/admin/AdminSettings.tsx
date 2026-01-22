@@ -69,7 +69,6 @@ export default function AdminSettings() {
         setError('Unauthorized: Please log in again');
       }
     } catch (err) {
-      console.error('Failed to load settings:', err);
     }
   };
 
@@ -222,7 +221,6 @@ export default function AdminSettings() {
         setSettings(prev => ({ ...prev, manualPremiumSuggestions: suggestions }));
       }
     } catch (err) {
-      console.error('Search failed:', err);
     }
   };
 

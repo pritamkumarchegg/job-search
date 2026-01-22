@@ -150,7 +150,7 @@ const JobDetailPage = () => {
             bj.companyName ||
             'Unknown Company';
             
-          console.log('✅ [JobDetailPage] Resolved company name:', companyName);
+;
           
           setJobData({
             id: bj._id,
@@ -179,7 +179,7 @@ const JobDetailPage = () => {
           });
         }
       } catch (err) {
-        console.error('❌ [JobDetailPage] Failed to fetch job details from backend:', err);
+;
       } finally {
         setLoading(false);
       }

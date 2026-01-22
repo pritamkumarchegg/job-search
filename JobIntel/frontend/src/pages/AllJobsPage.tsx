@@ -67,7 +67,7 @@ export default function AllJobsPage() {
         if (res.ok) {
           const data = await res.json();
           const jobsArray = Array.isArray(data) ? data : [];
-          console.log('✅ [AllJobsPage] Loaded jobs:', jobsArray.length);
+;
           setAllJobs(jobsArray);
         } else {
           toast({
@@ -77,7 +77,7 @@ export default function AllJobsPage() {
           });
         }
       } catch (err) {
-        console.error('Failed to fetch jobs:', err);
+;
         toast({
           title: 'Error',
           description: 'Failed to load jobs',

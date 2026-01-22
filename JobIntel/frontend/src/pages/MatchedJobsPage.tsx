@@ -119,7 +119,7 @@ export default function MatchedJobsPage() {
         if (res.ok) {
           const data = await res.json();
           const matchesArray = Array.isArray(data) ? data : data.matches || [];
-          console.log('✅ Matched jobs loaded:', matchesArray.length);
+;
           setMatches(matchesArray);
         } else {
           toast({
@@ -129,7 +129,7 @@ export default function MatchedJobsPage() {
           });
         }
       } catch (err) {
-        console.error('Failed to fetch matches:', err);
+;
         toast({
           title: 'Error',
           description: 'Failed to load matched jobs',

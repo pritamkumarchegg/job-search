@@ -65,7 +65,6 @@ export function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
           }
         }
       } catch (err) {
-        console.log('No existing resume found');
       }
     };
 

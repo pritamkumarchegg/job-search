@@ -90,7 +90,6 @@ export default function AdminUsers() {
         const data: UserStatsData = await response.json();
         setStats(data);
       } catch (err) {
-        console.error('Error fetching user stats:', err);
         setError(err instanceof Error ? err.message : 'Failed to load data');
         setStats(null);
       } finally {

@@ -64,7 +64,7 @@ const ProfileSettingsPage = () => {
         }));
       }
     } catch (error) {
-      console.error('Failed to fetch preferences:', error);
+;
     }
   };
 

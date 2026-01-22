@@ -48,7 +48,7 @@ export default function SettingsPage() {
         });
       }
     } catch (err) {
-      console.error('Failed to save settings:', err);
+;
       toast({
         title: 'Error',
         description: 'Failed to save settings',

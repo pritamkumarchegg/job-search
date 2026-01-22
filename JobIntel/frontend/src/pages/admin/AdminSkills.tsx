@@ -20,7 +20,6 @@ export default function AdminSkills() {
     try {
       const res = await api('/skills');
       if (res.ok) setSkills(await res.json());
-      else console.error('Failed to load skills', await res.text());
     } finally {
       setLoading(false);
     }

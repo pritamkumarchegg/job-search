@@ -11,7 +11,6 @@ async function main() {
     // but the function using in-memory server will have thrown earlier.
     // We'll still attempt to create and let mongoose report any errors.
     // eslint-disable-next-line no-console
-    console.warn('seedSource: connectDB error:', e?.message || e);
   });
 
   const url = process.env.SAMPLE_SOURCE_URL || 'https://example.com';
@@ -19,10 +18,8 @@ async function main() {
   try {
     const s = await Source.create({ name, url, selector: 'a', enabled: true });
     // eslint-disable-next-line no-console
-    console.log('Created Source:', s);
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error('Failed to create Source:', err?.message || err);
     process.exit(2);
   }
   process.exit(0);

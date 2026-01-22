@@ -15,7 +15,6 @@ export async function initPhase3Services(): Promise<void> {
   } catch (err) {
     // avoid crashing startup; log and rethrow if necessary
     // eslint-disable-next-line no-console
-    console.error('Failed to initialize Phase-3 services', err);
     throw err;
   }
 }

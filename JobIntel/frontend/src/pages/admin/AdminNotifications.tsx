@@ -103,7 +103,6 @@ export default function AdminNotifications() {
         if (nres.ok) setNotifications(await nres.json());
         if (jres.ok) setJobs(await jres.json());
       } catch (err) {
-        console.error('Failed to load notifications data', err);
         toast({ title: 'Failed to load notifications', variant: 'destructive' });
       } finally {
         setLoading(false);
@@ -169,7 +168,6 @@ export default function AdminNotifications() {
       const base = buildPayload();
       await sendPayload(base);
     } catch (err: any) {
-      console.error('Send failed', err);
       toast({ title: 'Send failed', description: String(err), variant: 'destructive' });
     }
   };
@@ -187,7 +185,6 @@ export default function AdminNotifications() {
       const json = await resp.json();
       setPreviewResult(json);
     } catch (err: any) {
-      console.error('Preview failed', err);
       toast({ title: 'Preview failed', description: String(err), variant: 'destructive' });
     } finally {
       setPreviewLoading(false);
@@ -212,7 +209,6 @@ export default function AdminNotifications() {
       // send
       await sendPayload(base);
     } catch (err: any) {
-      console.error('Preview & Send failed', err);
       toast({ title: 'Preview & Send failed', description: String(err), variant: 'destructive' });
     } finally {
       setPreviewLoading(false);

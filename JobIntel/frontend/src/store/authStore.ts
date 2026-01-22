@@ -28,7 +28,6 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (email: string, password: string) => {
         set({ isLoading: true });
-        console.log('[AuthStore] Starting login for:', email);
         
         try {
           const response = await fetch('/api/auth/login', {
@@ -38,13 +37,11 @@ export const useAuthStore = create<AuthState>()(
           });
 
           if (!response.ok) {
-            console.log('[AuthStore] Login API response not ok:', response.status);
             set({ isLoading: false });
             return false;
           }
 
           const data = await response.json();
-          console.log('[AuthStore] Login response data:', data);
           const { accessToken, refreshToken } = data;
 
           // Store tokens
@@ -58,11 +55,8 @@ export const useAuthStore = create<AuthState>()(
               const decodedPayload = JSON.parse(
                 atob(tokenParts[1].replace(/-/g, '+').replace(/_/g, '/'))
               );
-              console.log('[AuthStore] Decoded JWT payload:', decodedPayload);
-              console.log('[AuthStore] JWT roles:', decodedPayload.roles);
               
               const isAdmin = decodedPayload.roles?.includes('admin') || false;
-              console.log('[AuthStore] Is Admin:', isAdmin);
               
               const user: User = {
                 id: decodedPayload.sub,
@@ -85,7 +79,6 @@ export const useAuthStore = create<AuthState>()(
                 },
               };
               
-              console.log('[AuthStore] Setting user:', user);
 
               set({
                 user,
@@ -94,19 +87,15 @@ export const useAuthStore = create<AuthState>()(
                 isAdmin,
                 token: accessToken,
               });
-              console.log('[AuthStore] Login successful, returning true');
               return true;
             } else {
-              console.log('[AuthStore] Invalid token format, parts:', tokenParts.length);
             }
           } catch (decodeErr) {
-            console.error('[AuthStore] Failed to decode token:', decodeErr);
           }
 
           set({ isLoading: false });
           return false;
         } catch (err) {
-          console.error('[AuthStore] Login error:', err);
           set({ isLoading: false });
           return false;
         }
@@ -158,7 +147,6 @@ export const useAuthStore = create<AuthState>()(
           set({ user, isAuthenticated: true, isLoading: false, isAdmin: false, token: accessToken });
           return true;
         } catch (err) {
-          console.error('Register error:', err);
           set({ isLoading: false });
           return false;
         }
@@ -177,7 +165,6 @@ export const useAuthStore = create<AuthState>()(
       },
 
       updateUserFromBackend: (backendData: any) => {
-        console.log('[AuthStore] Updating user from backend data:', backendData);
         set((state) => {
           if (!state.user) return state;
           
@@ -191,7 +178,6 @@ export const useAuthStore = create<AuthState>()(
             notificationPreferences: backendData.notificationPreferences || state.user.notificationPreferences,
           };
           
-          console.log('[AuthStore] Updated user object:', updatedUser);
           return { user: updatedUser };
         });
       },
@@ -241,7 +227,6 @@ export const useAuthStore = create<AuthState>()(
               });
             }
           } catch (err) {
-            console.error('Failed to initialize from storage:', err);
             localStorage.removeItem('token');
             localStorage.removeItem('refreshToken');
           }

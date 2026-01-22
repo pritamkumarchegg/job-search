@@ -69,7 +69,7 @@ const PricingPage = () => {
       const rzp = new (window as any).Razorpay(options);
       rzp.open();
     } catch (err) {
-      console.error('Buy failed', err);
+;
       toast({ title: 'Purchase failed', description: String(err), variant: 'destructive' });
     } finally {
       setLoading(false);

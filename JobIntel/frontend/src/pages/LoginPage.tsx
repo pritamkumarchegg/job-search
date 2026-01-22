@@ -34,15 +34,15 @@ const LoginPage = () => {
 
     const success = await login(email, password);
     
-    console.log('=== LOGIN DEBUG ===');
-    console.log('Login success:', success);
+;
+;
     
     if (success) {
       const { user } = useAuthStore.getState();
       
-      console.log('User object:', user);
-      console.log('User role:', user?.role);
-      console.log('Is admin:', user?.role === 'admin');
+;
+;
+;
       
       toast({
         title: 'Welcome back!',
@@ -52,19 +52,19 @@ const LoginPage = () => {
       
       // Redirect based on user role - admin to /admin, user to /dashboard
       const redirectPath = user?.role === 'admin' ? '/admin' : from;
-      console.log('Redirect path:', redirectPath);
-      console.log('From path:', from);
+;
+;
       
       // Redirect after 1 second
       setTimeout(() => {
-        console.log('Navigating to:', redirectPath);
+;
         navigate(redirectPath, { replace: true });
       }, 1000);
     } else {
-      console.log('Login failed');
+;
       setError('Invalid email or password.');
     }
-    console.log('=== END DEBUG ===');
+;
   };
 
 

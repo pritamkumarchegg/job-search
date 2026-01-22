@@ -43,28 +43,28 @@ import {
 import { useState, useEffect } from 'react';
 
 const DashboardPage = () => {
-  console.log('🔍 [DashboardPage] ========== COMPONENT RENDER START ==========');
-  console.log('🔍 [DashboardPage] Component rendered/updated at', new Date().toISOString());
-  console.log('🔍 [DashboardPage] BUILD VERSION: 2025-01-21-V2-FETCH-FIX');
+;
+;
+;
 
   const { user, isAuthenticated, logout } = useAuthStore();
   const [skillsRating, setSkillsRating] = useState<any>({});
   
-  console.log('🔍 [DashboardPage] *** AUTH STATE CHECK ***');
-  console.log('🔍 [DashboardPage] isAuthenticated:', isAuthenticated);
-  console.log('🔍 [DashboardPage] user exists:', !!user);
-  console.log('🔍 [DashboardPage] user id:', user?.id);
-  console.log('🔍 [DashboardPage] user email:', user?.email);
-  console.log('🔍 [DashboardPage] Auth state:', { isAuthenticated, user: user ? { id: user.id, name: user.name, email: user.email, tier: user.tier } : null });
-  console.log('🔍 [DashboardPage] Local skillsRating state:', skillsRating);
-  console.log('🔍 [DashboardPage] Local skillsRating keys count:', Object.keys(skillsRating).length);
+;
+;
+;
+;
+;
+;
+;
+;
 
   if (!isAuthenticated || !user) {
-    console.log('🔍 [DashboardPage] ❌ User not authenticated, redirecting to login');
+;
     return <Navigate to="/login" replace />;
   }
 
-  console.log('🔍 [DashboardPage] ✅ User authenticated, proceeding with dashboard render');
+;
 
   // Add extra safety check for notificationPreferences
   const notifPrefs = user.notificationPreferences || {
@@ -76,21 +76,21 @@ const DashboardPage = () => {
     applicationUpdate: true,
     referralUpdate: false,
   };
-  console.log('🔍 [DashboardPage] Notification preferences:', notifPrefs);
+;
 
   // Real-time data: fetch from backend and stay in sync with app store
   const backendBase = (import.meta as any).env?.VITE_API_URL || '';
-  console.log('🔍 [DashboardPage] Backend base URL:', backendBase);
+;
 
   const [matchedJobs, setMatchedJobs] = useState<any[]>([]);
   const [totalMatchedJobsCount, setTotalMatchedJobsCount] = useState(0); // Total count from database at current threshold
   const [profileFields, setProfileFields] = useState<any[]>([]);
   const appStore = useApplicationStore();
-  console.log('🔍 [DashboardPage] Application store state:', { applicationsCount: Object.keys(appStore.applications || {}).length });
+;
 
   const [recentApplications, setRecentApplications] = useState<any[]>(Object.values(appStore.applications || {}));
   const [minMatchScore, setMinMatchScore] = useState(70); // Dynamic threshold from admin settings
-  console.log('🔍 [DashboardPage] Initial recent applications:', recentApplications.length);
+;
   // Edit profile modal state (profile only)
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [profileForm, setProfileForm] = useState<any>({
@@ -144,27 +144,27 @@ const DashboardPage = () => {
 
   // Fetch full user profile including skillsRating from backend - fires once on mount
   useEffect(() => {
-    console.log('🔍 [DashboardPage] ========== MOUNT EFFECT: FETCH USER PROFILE ==========');
-    console.log('🔍 [DashboardPage] useEffect fired - checking user...');
-    console.log('🔍 [DashboardPage] user:', user);
-    console.log('🔍 [DashboardPage] user?.id:', user?.id);
+;
+;
+;
+;
     
     if (!user || !user.id) {
-      console.log('🔍 [DashboardPage] ❌ No user or user.id, skipping profile fetch');
+;
       return;
     }
 
-    console.log('🔍 [DashboardPage] ✅ Starting to fetch full user profile');
+;
     let mounted = true;
 
     const fetchUserProfile = async () => {
       try {
         const base = '';  // Use relative URL for CORS compatibility
         const url = `/api/users/${user.id}`;
-        console.log('🔍 [DashboardPage] 📡 FETCH REQUEST to:', url);
+;
 
         const token = localStorage.getItem('token');
-        console.log('🔍 [DashboardPage] Token from localStorage:', !!token, 'length:', token?.length);
+;
         
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
@@ -173,66 +173,66 @@ const DashboardPage = () => {
           headers['Authorization'] = `Bearer ${token}`;
         }
 
-        console.log('🔍 [DashboardPage] Sending fetch with headers:', Object.keys(headers));
+;
         const res = await fetch(url, {
           cache: 'no-store',
           headers,
         });
         
-        console.log('🔍 [DashboardPage] 📥 API RESPONSE - Status:', res.status, 'OK:', res.ok);
+;
 
         if (!res.ok) {
-          console.warn('🔍 [DashboardPage] ❌ Failed with status:', res.status);
+;
           const errorText = await res.text();
-          console.warn('🔍 [DashboardPage] Error response:', errorText);
+;
           return;
         }
 
         const userData = await res.json();
-        console.log('🔍 [DashboardPage] 📊 PARSED USER DATA');
-        console.log('🔍 [DashboardPage]   userData:', userData);
-        console.log('🔍 [DashboardPage]   userData.skillsRating:', userData?.skillsRating);
-        console.log('🔍 [DashboardPage]   skillsRating type:', typeof userData?.skillsRating);
-        console.log('🔍 [DashboardPage]   skillsRating keys:', userData?.skillsRating ? Object.keys(userData.skillsRating) : []);
-        console.log('🔍 [DashboardPage]   skillsRating count:', userData?.skillsRating ? Object.keys(userData.skillsRating).length : 0);
+;
+;
+;
+;
+;
+;
 
         if (!mounted) {
-          console.log('🔍 [DashboardPage] Component unmounted, not updating');
+;
           return;
         }
 
         // Update local skillsRating state
         if (userData?.skillsRating) {
-          console.log('🔍 [DashboardPage] ✅ SETTING LOCAL SKILLSRATING STATE with', Object.keys(userData.skillsRating).length, 'skills');
+;
           setSkillsRating(userData.skillsRating);
-          console.log('🔍 [DashboardPage] setSkillsRating called');
+;
         } else {
-          console.log('🔍 [DashboardPage] ⚠️ No skillsRating in userData');
+;
         }
 
         // Update user in auth store
         if (userData) {
-          console.log('🔍 [DashboardPage] ✅ Updating auth store with userData');
+;
           const { updateUserFromBackend } = useAuthStore.getState();
           updateUserFromBackend(userData);
         }
       } catch (e) {
-        console.error('🔍 [DashboardPage] ❌ FETCH ERROR:', e);
+;
       }
     };
 
-    console.log('🔍 [DashboardPage] Calling fetchUserProfile immediately');
+;
     fetchUserProfile();
     
     return () => {
-      console.log('🔍 [DashboardPage] Mount effect cleanup');
+;
       mounted = false;
     };
   }, []);
 
   // Fetch matched jobs from backend (top matches). Keep lightweight and update periodically.
   useEffect(() => {
-    console.log('🔍 [DashboardPage] useEffect: Fetching matched jobs');
+;
     let mounted = true;
     const fetchMatches = async () => {
       try {
@@ -241,7 +241,7 @@ const DashboardPage = () => {
         const url = base 
           ? `${base}/api/ai/best-fit-jobs/${user.id}?page=1&limit=50` 
           : `/api/ai/best-fit-jobs/${user.id}?page=1&limit=50`;
-        console.log('🔍 [DashboardPage] Fetching matched jobs from URL:', url);
+;
 
         const token = localStorage.getItem('token');
         const headers: Record<string, string> = {
@@ -255,18 +255,18 @@ const DashboardPage = () => {
           cache: 'no-store',
           headers,
         });
-        console.log('🔍 [DashboardPage] Matched jobs API response status:', res.status);
+;
 
         if (!res.ok) {
-          console.warn('🔍 [DashboardPage] Matched jobs API returned non-ok status:', res.status);
+;
           return;
         }
 
         const data = await res.json();
-        console.log('🔍 [DashboardPage] Matched jobs API response data:', data);
+;
 
         if (!mounted) {
-          console.log('🔍 [DashboardPage] Component unmounted, not updating jobs');
+;
           return;
         }
 
@@ -290,20 +290,20 @@ const DashboardPage = () => {
           totalCount = jobsArray.length;
         }
         
-        console.log('🔍 [DashboardPage] Setting matched jobs:', jobsArray.length, 'jobs (total:', totalCount, 'at', data.pagination?.minScore || 70, '%)');
+;
         setMatchedJobs(jobsArray);
         setTotalMatchedJobsCount(totalCount);
         setMinMatchScore(data.pagination?.minScore || 70);
       } catch (e) {
-        console.error('🔍 [DashboardPage] Failed to fetch matched jobs:', e);
+;
       }
     };
     fetchMatches();
     const iv = setInterval(fetchMatches, 15000);
-    console.log('🔍 [DashboardPage] Set up jobs polling interval');
+;
 
     return () => {
-      console.log('🔍 [DashboardPage] Cleaning up jobs polling interval');
+;
       mounted = false;
       clearInterval(iv);
     };
@@ -311,18 +311,18 @@ const DashboardPage = () => {
 
   // Fetch user's applications from backend and keep in sync with application store (SSE updates)
   useEffect(() => {
-    console.log('🔍 [DashboardPage] useEffect: Fetching user applications');
+;
     let mounted = true;
     const fetchApps = async () => {
       if (!user || !user.id) {
-        console.log('🔍 [DashboardPage] No user or user ID, skipping applications fetch');
+;
         return;
       }
 
       try {
         const base = backendBase ? backendBase.replace(/\/$/, '') : '';
         const url = base ? `${base}/api/applications?userId=${user.id}` : `/api/applications?userId=${user.id}`;
-        console.log('🔍 [DashboardPage] Fetching applications from URL:', url);
+;
 
         const token = localStorage.getItem('token');
         const headers: Record<string, string> = {
@@ -336,34 +336,34 @@ const DashboardPage = () => {
           cache: 'no-store',
           headers,
         });
-        console.log('🔍 [DashboardPage] Applications API response status:', res.status);
+;
 
         if (!res.ok) {
-          console.warn('🔍 [DashboardPage] Applications API returned non-ok status:', res.status);
+;
           return;
         }
 
         const apps = await res.json();
-        console.log('🔍 [DashboardPage] Applications API response data:', apps);
+;
 
         if (!mounted) {
-          console.log('🔍 [DashboardPage] Component unmounted, not updating applications');
+;
           return;
         }
 
         const appsArray = Array.isArray(apps) ? apps : [];
-        console.log('🔍 [DashboardPage] Setting recent applications:', appsArray.length, 'applications');
+;
         setRecentApplications(appsArray);
       } catch (e) {
-        console.error('🔍 [DashboardPage] Failed to fetch recent applications:', e);
+;
       }
     };
     fetchApps();
     const iv = setInterval(fetchApps, 15000);
-    console.log('🔍 [DashboardPage] Set up applications polling interval');
+;
 
     return () => {
-      console.log('🔍 [DashboardPage] Cleaning up applications polling interval');
+;
       mounted = false;
       clearInterval(iv);
     };
@@ -371,27 +371,27 @@ const DashboardPage = () => {
 
   // Keep in-sync with application store (SSE may update appStore.application map)
   useEffect(() => {
-    console.log('🔍 [DashboardPage] useEffect: Syncing with application store');
+;
     const apps = Object.values(appStore.applications || {});
-    console.log('🔍 [DashboardPage] Application store has', apps.length, 'applications');
-    console.log('🔍 [DashboardPage] Application store applications:', apps);
+;
+;
     setRecentApplications(apps);
   }, [appStore.applications]);
 
   // Load available skills when skills modal opens
   useEffect(() => {
     if (!editSkillsOpen) {
-      console.log('🔍 [DashboardPage] Skills modal not open, skipping skills fetch');
+;
       return;
     }
 
-    console.log('🔍 [DashboardPage] useEffect: Loading available skills for modal');
+;
     let mounted = true;
     const fetchSkills = async () => {
       try {
         const base = backendBase ? backendBase.replace(/\/$/, '') : '';
         const url = base ? `${base}/api/skills` : '/api/skills';
-        console.log('🔍 [DashboardPage] Fetching skills from URL:', url);
+;
 
         const token = localStorage.getItem('token');
         const headers: Record<string, string> = {
@@ -405,38 +405,38 @@ const DashboardPage = () => {
           cache: 'no-store',
           headers,
         });
-        console.log('🔍 [DashboardPage] Skills API response status:', res.status);
+;
 
         if (!res.ok) {
-          console.warn('🔍 [DashboardPage] Skills API returned non-ok status:', res.status);
+;
           return;
         }
 
         const skills = await res.json();
-        console.log('🔍 [DashboardPage] Skills API response data:', skills);
+;
 
         if (!mounted) {
-          console.log('🔍 [DashboardPage] Component unmounted, not updating skills');
+;
           return;
         }
 
         const skillsArray = Array.isArray(skills) ? skills : [];
-        console.log('🔍 [DashboardPage] Setting available skills:', skillsArray.length, 'skills');
+;
         setAvailableSkills(skillsArray);
       } catch (e) {
-        console.error('🔍 [DashboardPage] Failed to fetch skills:', e);
+;
       }
     };
     fetchSkills();
     return () => {
-      console.log('🔍 [DashboardPage] Cleaning up skills fetch');
+;
       mounted = false;
     };
   }, [editSkillsOpen, backendBase]);
 
   // Load profile fields when profile modal opens (or on mount)
   useEffect(() => {
-    console.log('🔍 [DashboardPage] useEffect: Loading profile fields for modal');
+;
     // Simplified: only load skills, ignore complex profile fields
     setProfileFields([]);
   }, []);
@@ -489,10 +489,10 @@ const DashboardPage = () => {
         useAuthStore.getState().updateUser({ ...updated });
         setEditProfileOpen(false);
       } else {
-        console.warn('failed to save profile', await res.text());
+;
       }
     } catch (e) {
-      console.error('saveProfile error', e);
+;
     } finally {
       setSavingProfile(false);
     }
@@ -530,25 +530,25 @@ const DashboardPage = () => {
         useAuthStore.getState().updateUser({ ...updated });
         setEditSkillsOpen(false);
       } else {
-        console.warn('failed to save skills', await res.text());
+;
       }
     } catch (e) {
-      console.error('saveSkills error', e);
+;
     } finally {
       setSavingSkills(false);
     }
   };
 
-  console.log('🔍 [DashboardPage] ========== RENDER STATE SNAPSHOT ==========');
-  console.log('🔍 [DashboardPage] Final component state before JSX render:');
-  console.log('🔍 [DashboardPage]   - skillsRating:', skillsRating);
-  console.log('🔍 [DashboardPage]   - skillsRating keys:', Object.keys(skillsRating));
-  console.log('🔍 [DashboardPage]   - skillsRating count:', Object.keys(skillsRating).length);
-  console.log('🔍 [DashboardPage]   - matchedJobs count:', matchedJobs.length);
-  console.log('🔍 [DashboardPage]   - recentApplications count:', recentApplications.length);
-  console.log('🔍 [DashboardPage]   - profileFields count:', profileFields.length);
-  console.log('🔍 [DashboardPage]   - availableSkills count:', availableSkills.length);
-  console.log('🔍 [DashboardPage] ========== JSX RENDER START ==========');
+;
+;
+;
+;
+;
+;
+;
+;
+;
+;
 
   return (
     <div className="space-y-6">
@@ -678,7 +678,7 @@ const DashboardPage = () => {
                 {console.log('🔍 [DashboardPage] RENDERING SKILL BADGES - skillsRating keys:', Object.keys(skillsRating), 'count:', Object.keys(skillsRating).length) || null}
                 {Object.keys(skillsRating).length > 0 ? (
                   Object.keys(skillsRating).map((skill: string) => {
-                    console.log('🔍 [DashboardPage] RENDERING BADGE FOR SKILL:', skill);
+;
                     return (
                       <Badge key={skill} variant="secondary" className="px-3 py-1.5">
                         {skill}

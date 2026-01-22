@@ -6,10 +6,11 @@ services:
     plan: free
     repo: https://github.com/pritamkumarchegg/job-search.git
     branch: main
+    rootDir: JobIntel
     
     # Build & Start Commands
-    buildCommand: npm ci && npm run build -w backend
-    startCommand: npm start -w backend
+    buildCommand: npm ci && npm run build --workspace=backend
+    startCommand: npm start --workspace=backend
     
     # Health check
     healthCheckPath: /api/health

@@ -34,7 +34,7 @@ export default function ApplicationsPage() {
           setApplications(Array.isArray(apps) ? apps : []);
         }
       } catch (err) {
-        console.error('Failed to fetch applications:', err);
+;
       } finally {
         setLoading(false);
       }

@@ -16,7 +16,6 @@ if (typeof window !== 'undefined') {
     const host = window.location.hostname;
     if (host === 'jobintell.netlify.app') {
       backendBase = 'https://jobintel-backend.onrender.com';
-      console.warn('[runtime] VITE_API_URL not set — falling back to', backendBase);
     }
   }
 

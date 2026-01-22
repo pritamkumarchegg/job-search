@@ -67,7 +67,6 @@ export function PublicSidebar({ collapsed = false, onToggleCollapse }: PublicSid
           setMatchedJobs(jobs.slice(0, 10));
         }
       } catch (e) {
-        console.error('Failed to fetch sidebar matches:', e);
       } finally {
         setLoadingMatches(false);
       }

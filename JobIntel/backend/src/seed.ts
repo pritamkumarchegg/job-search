@@ -20,9 +20,7 @@ async function writeLocalAdmin(email: string, hash: string) {
       createdAt: new Date().toISOString()
     };
     await fs.writeFile(outFile, JSON.stringify(payload, null, 2), { encoding: "utf8" });
-    console.log(`Wrote local admin to ${outFile}`);
   } catch (err) {
-    console.error("Failed to write local admin file:", err);
   }
 }
 
@@ -35,16 +33,13 @@ async function run() {
     await connectDB(uri);
     const existing = await User.findOne({ email: adminEmail });
     if (existing) {
-      console.log("Admin already exists in DB");
       process.exit(0);
     }
 
     const hash = await bcrypt.hash(adminPass, 10);
     const admin = await User.create({ email: adminEmail, passwordHash: hash, roles: ["admin"], name: "Admin" });
-    console.log("Created admin in DB:", admin.email);
     process.exit(0);
   } catch (err) {
-    console.warn("DB seed failed, falling back to local dev file:", err?.message || err);
     const hash = await bcrypt.hash(adminPass, 10);
     await writeLocalAdmin(adminEmail, hash);
     process.exit(0);
@@ -52,6 +47,5 @@ async function run() {
 }
 
 run().catch((err) => {
-  console.error(err);
   process.exit(1);
 });

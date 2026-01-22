@@ -59,11 +59,9 @@ const JobApplyBlocker: React.FC<JobApplyBlockerProps> = ({
           const data = await response.json();
           setPermission(data);
         } else {
-          console.error('Failed to check permission');
           setPermission({ allowed: false, reason: 'Permission check failed' });
         }
       } catch (err) {
-        console.error('Error checking permission:', err);
         setPermission({ allowed: false, reason: 'Error checking permission' });
       } finally {
         setLoading(false);
@@ -104,7 +102,6 @@ const JobApplyBlocker: React.FC<JobApplyBlockerProps> = ({
         body: JSON.stringify({ jobId, actionType }),
       });
     } catch (err) {
-      console.error('Error logging action:', err);
       // Don't throw - allow link to work even if logging fails
     }
   };

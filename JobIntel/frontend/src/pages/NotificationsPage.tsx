@@ -43,7 +43,7 @@ export default function NotificationsPage() {
           setNotifications([]);
         }
       } catch (err) {
-        console.error('Failed to fetch notifications:', err);
+;
         toast({
           title: 'Error',
           description: 'Failed to load notifications',
@@ -79,7 +79,7 @@ export default function NotificationsPage() {
         ));
       }
     } catch (err) {
-      console.error('Failed to mark as read:', err);
+;
     }
   };
 
@@ -112,7 +112,7 @@ export default function NotificationsPage() {
         });
       }
     } catch (err) {
-      console.error('Failed to delete notification:', err);
+;
       toast({
         title: 'Error',
         description: 'Failed to delete notification',
