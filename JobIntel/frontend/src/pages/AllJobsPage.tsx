@@ -17,6 +17,7 @@ import { Loader2, MapPin, Building2, Search, Briefcase, Filter, X, ChevronLeft, 
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/store/authStore';
 import AuthRequiredModal from '@/components/AuthRequiredModal';
+import JobApplyBlocker from '@/components/JobApplyBlocker';
 
 interface Job {
   _id: string;
@@ -382,7 +383,14 @@ export default function AllJobsPage() {
                   {/* Action Buttons */}
                   <div className="flex gap-2 flex-col">
                     {job.applyUrl || job.applyLink ? (
-                      isAuthenticated ? (
+                      <JobApplyBlocker
+                        jobId={job._id}
+                        actionType="apply"
+                        onActionAllowed={() => {
+                          // Open the apply link in a new tab
+                          window.open(job.applyUrl || job.applyLink, '_blank', 'noopener,noreferrer');
+                        }}
+                      >
                         <a
                           href={job.applyUrl || job.applyLink}
                           target="_blank"
@@ -392,20 +400,7 @@ export default function AllJobsPage() {
                           <Briefcase className="h-4 w-4" />
                           Apply Now
                         </a>
-                      ) : (
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="text-sm w-full justify-center gap-2"
-                          onClick={() => {
-                            setSelectedJobForAuth({ id: job._id, title: job.title });
-                            setAuthModalOpen(true);
-                          }}
-                        >
-                          <Briefcase className="h-4 w-4" />
-                          Apply Now
-                        </Button>
-                      )
+                      </JobApplyBlocker>
                     ) : (
                       <button
                         disabled

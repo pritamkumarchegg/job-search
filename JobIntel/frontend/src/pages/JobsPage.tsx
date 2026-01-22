@@ -34,6 +34,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useJobsStore } from '@/store/jobsStore';
 import { useApplicationStore } from '@/store/applicationStore';
 import AuthRequiredModal from '@/components/AuthRequiredModal';
+import JobApplyBlocker from '@/components/JobApplyBlocker';
 
 const JobsPage = () => {
   const navigate = useNavigate();
@@ -687,12 +688,20 @@ const JobsPage = () => {
                       {!userApplications[job.id] ? (
                         <>
                           {isAuthenticated ? (
-                            <a href={job.applyLink} target="_blank" rel="noopener noreferrer" onClick={() => trackClick('apply_job', { jobId: job.id, jobTitle: job.title })}>
-                              <Button variant="accent" size="sm" className="text-xs sm:text-sm">
-                                Apply Now
-                                <ExternalLink className="h-4 w-4 ml-1 hidden sm:inline" />
-                              </Button>
-                            </a>
+                            <JobApplyBlocker
+                              jobId={job.id}
+                              actionType="apply"
+                              onActionAllowed={() => {
+                                trackClick('apply_job', { jobId: job.id, jobTitle: job.title });
+                              }}
+                            >
+                              <a href={job.applyLink} target="_blank" rel="noopener noreferrer" onClick={() => trackClick('apply_job', { jobId: job.id, jobTitle: job.title })}>
+                                <Button variant="accent" size="sm" className="text-xs sm:text-sm">
+                                  Apply Now
+                                  <ExternalLink className="h-4 w-4 ml-1 hidden sm:inline" />
+                                </Button>
+                              </a>
+                            </JobApplyBlocker>
                           ) : (
                             <Button 
                               variant="accent" 

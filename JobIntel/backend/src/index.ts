@@ -37,6 +37,7 @@ import analyticsRoutes from './routes/analytics';
 import jsearchRoutes from './routes/jsearch';
 import matchingRoutes from './routes/matching';
 import resumeRoutes from './routes/resume';
+import usageRoutes from './routes/usage';
 import { trackPageView } from './middleware/analytics';
 
 // ========================================
@@ -232,6 +233,7 @@ app.use('/api/notifications', notificationCrudRoutes);
 app.use('/api/messages', messageCrudRoutes);
 app.use('/api/matching', matchingRoutes);
 app.use('/api/resume', resumeRoutes);
+app.use('/api/usage', usageRoutes);
 
 // ========================================
 // PHASE 1: Admin Initialization

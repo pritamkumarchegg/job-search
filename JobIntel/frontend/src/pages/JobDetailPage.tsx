@@ -31,6 +31,7 @@ import { useJobsStore } from '@/store/jobsStore';
 import { useToast } from '@/hooks/use-toast';
 import { useApplicationStore } from '@/store/applicationStore';
 import AuthRequiredModal from '@/components/AuthRequiredModal';
+import JobApplyBlocker from '@/components/JobApplyBlocker';
 
 const JobDetailPage = () => {
   const navigate = useNavigate();
@@ -364,12 +365,20 @@ const JobDetailPage = () => {
                 </Button>
               </div>
               {isAuthenticated ? (
-                <a href={job.applyLink} target="_blank" rel="noopener noreferrer" className="w-full lg:w-auto" onClick={() => trackClick('apply_job_detail', { jobId: job.id, jobTitle: job.title })}>
-                  <Button variant="accent" size="lg" className="w-full">
-                    Apply Now
-                    <ExternalLink className="h-4 w-4 ml-2" />
-                  </Button>
-                </a>
+                <JobApplyBlocker
+                  jobId={job.id}
+                  actionType="apply"
+                  onActionAllowed={() => {
+                    trackClick('apply_job_detail', { jobId: job.id, jobTitle: job.title });
+                  }}
+                >
+                  <a href={job.applyLink} target="_blank" rel="noopener noreferrer" className="w-full lg:w-auto" onClick={() => trackClick('apply_job_detail', { jobId: job.id, jobTitle: job.title })}>
+                    <Button variant="accent" size="lg" className="w-full">
+                      Apply Now
+                      <ExternalLink className="h-4 w-4 ml-2" />
+                    </Button>
+                  </a>
+                </JobApplyBlocker>
               ) : (
                 <Button 
                   variant="accent" 
