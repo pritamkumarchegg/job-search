@@ -9,9 +9,8 @@
 # Build environment variables
 [build.environment]
   NODE_VERSION = "20"
-  # IMPORTANT: Set VITE_API_URL in Netlify site UI (Site › Settings › Build & deploy › Environment)
-  # DO NOT commit sensitive values to this file
-  # Example: VITE_API_URL = "https://jobintel-backend.onrender.com"
+  NODE_ENV = "production"
+  VITE_API_URL = "https://jobintel-backend.onrender.com"
 
 # Cache settings
 [context.production]
@@ -37,14 +36,27 @@
     X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self' https:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https:;"
+    Content-Security-Policy = "default-src 'self' https:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https://jobintel-backend.onrender.com"
 
-# Asset caching
+# Asset caching - aggressive for production
 [[headers]]
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# API endpoint configuration
-# See Site › Settings › Build & deploy › Build hooks for automated deployments
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# HTML caching - no cache for production
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
 

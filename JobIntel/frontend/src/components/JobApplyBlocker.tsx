@@ -155,57 +155,44 @@ const JobApplyBlocker: React.FC<JobApplyBlockerProps> = ({
         </div>
       </div>
 
-      {/* Hover Tooltip - Made very visible with fixed positioning fallback */}
-      <div className="absolute -top-48 left-1/2 transform -translate-x-1/2 z-[9999] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
-        <div className="bg-gradient-to-br from-red-600 via-red-600 to-red-700 text-white px-5 py-4 rounded-xl shadow-2xl text-sm w-72 border-2 border-red-400 animate-pulse">
-          {/* Header */}
-          <div className="flex items-center gap-2 mb-3 font-bold text-base">
-            <Lock className="h-6 w-6 flex-shrink-0" />
-            <span>Premium Only</span>
+      {/* Hover Tooltip - Contained within viewport */}
+      <div className="absolute -top-32 left-1/2 transform -translate-x-1/2 z-[9999] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto max-w-screen">
+        <div className="bg-gradient-to-br from-red-600 via-red-600 to-red-700 text-white px-6 py-2 rounded-lg shadow-2xl text-sm w-80 border-2 border-red-400 animate-pulse whitespace-nowrap overflow-hidden">
+          {/* Header + Message in one line */}
+          <div className="flex items-center gap-3">
+            <Lock className="h-5 w-5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <span className="font-bold text-base">Premium Only</span>
+              <span className="mx-2">•</span>
+              <span className="text-white text-xs truncate">
+                {permission?.reason?.substring(0, 40) || "Upgrade for unlimited"}
+              </span>
+            </div>
           </div>
-
-          {/* Message */}
-          <p className="text-white text-sm mb-3 font-semibold">
-            {permission?.reason || "You've used your free monthly apply limit. Upgrade to Premium for unlimited applies."}
-          </p>
 
           {/* Reset Date if available */}
           {permission?.resetDate && (
-            <div className="bg-red-800/70 rounded-lg px-3 py-2 mb-3 flex items-center gap-2 border-2 border-yellow-300/50">
-              <Clock className="h-5 w-5 text-yellow-300 flex-shrink-0" />
-              <div className="text-xs">
-                <div className="font-bold text-yellow-200">Next free action:</div>
-                <div className="text-yellow-100 font-semibold text-sm">
-                  {new Date(permission.resetDate).toLocaleDateString('en-US', { 
-                    month: 'long', 
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </div>
-              </div>
+            <div className="text-xs text-yellow-100 mt-1 ml-8">
+              Next: {new Date(permission.resetDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </div>
           )}
 
-          {/* CTA Button in Tooltip */}
+          {/* CTA Button */}
           <button
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               navigate('/pricing');
             }}
-            className="w-full bg-white text-red-600 hover:bg-yellow-100 font-bold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2 mb-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white text-red-600 hover:bg-yellow-100 font-bold py-1.5 px-3 rounded transition-all flex items-center gap-1 text-xs whitespace-nowrap"
           >
-            <Crown className="h-5 w-5" />
-            Upgrade Now - ₹99/year
+            <Crown className="h-3.5 w-3.5" />
+            Upgrade
           </button>
-
-          <p className="text-xs text-yellow-100 text-center">
-            ✓ Unlimited applies • ✓ Early access • ✓ No limits
-          </p>
         </div>
 
-        {/* Tooltip arrow pointing down */}
-        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 border-8 border-transparent border-t-red-600 drop-shadow-lg"></div>
+        {/* Arrow */}
+        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 border-6 border-transparent border-t-red-600"></div>
       </div>
     </div>
   );

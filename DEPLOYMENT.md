@@ -25,13 +25,23 @@ Complete guide to deploy JobIntel with:
 ## 🎯 Quick Start
 
 **Fastest Deployment (Render + Netlify):**
-1. Push code to GitHub
-2. Connect Render to GitHub for backend
-3. Connect Netlify to GitHub for frontend
-4. Set environment variables
-5. Deploy
+1. Push code to GitHub ✅
+2. Go to Render.com → Create Web Service
+3. Connect to `pritamkumarchegg/job-search` repository
+4. Build command: `npm ci && npm run build -w backend`
+5. Start command: `npm start --prefix backend`
+6. Add environment variables (see below)
+7. Go to Netlify.com → Add new site
+8. Connect to GitHub repository
+9. Build command: `npm run build -w frontend`
+10. Publish: `frontend/dist`
+11. Add `VITE_API_URL=https://jobintel-backend.onrender.com`
+12. Deploy ✅
 
-**Time: ~10 minutes**
+**Time: ~15 minutes**
+
+**Backend URL after deployment:** `https://jobintel-backend.onrender.com`
+**Frontend URL after deployment:** `https://jobintel.netlify.app`
 
 ---
 
@@ -57,49 +67,58 @@ Complete guide to deploy JobIntel with:
 
 ### Step 1: Create Render Web Service
 
-1. Go to [render.com](https://render.com)
+1. Go to [render.com](https://render.com) - Sign up/Login
 2. Click "New +" → "Web Service"
-3. Connect your GitHub repository
-4. Select repository: `job-search`
-5. Fill in configuration:
+3. Select "Build and deploy from a Git repository"
+4. Connect your GitHub account
+5. Choose repository: `pritamkumarchegg/job-search`
+6. Fill in configuration:
 
 | Field | Value |
 |-------|-------|
 | **Name** | `jobintel-backend` |
 | **Environment** | `Node` |
-| **Region** | `Oregon` (or closest to users) |
+| **Region** | `Ohio` (recommended) |
 | **Branch** | `main` |
+| **Root Directory** | Leave blank (auto-detect) |
 | **Build Command** | `npm ci && npm run build -w backend` |
-| **Start Command** | `npm start -w backend` |
-| **Plan** | `Free` (or Starter for production) |
+| **Start Command** | `npm start --prefix backend` |
+| **Plan** | `Starter` ($7/month - recommended for production) |
 
-### Step 2: Add Environment Variables
+### Step 2: Add Environment Variables in Render
 
-In Render dashboard, go to **Environment**:
+In Render dashboard under your service, go to **Environment**:
+
+**Required Variables (set these in Render UI):**
 
 ```bash
 NODE_ENV=production
 MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/jobintel
-JWT_SECRET=your-super-secret-jwt-key-change-this
-VITE_API_URL=https://jobintel-backend.onrender.com
+JWT_SECRET=your-random-secret-key-at-least-32-chars-long
+RAZORPAY_KEY_ID=your-razorpay-key-id
+RAZORPAY_KEY_SECRET=your-razorpay-key-secret
 CORS_ORIGIN=https://jobintel.netlify.app
-
-# Optional: Add other services
-GITHUB_CLIENT_ID=your-github-client-id
-GITHUB_CLIENT_SECRET=your-github-client-secret
-GITHUB_CALLBACK_URL=https://jobintel-backend.onrender.com/auth/github/callback
-
-# Notification services (optional)
-TELEGRAM_BOT_TOKEN=your-telegram-bot-token
-WHATSAPP_API_KEY=your-whatsapp-api-key
+VITE_API_URL=https://jobintel-backend.onrender.com
 ```
 
-### Step 3: Deploy
+**Get these values:**
+- `MONGO_URI`: From MongoDB Atlas connection string
+- `JWT_SECRET`: Generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+- `RAZORPAY_*`: From your Razorpay dashboard (https://dashboard.razorpay.com)
+
+### Step 3: Enable Auto-Deploy & Health Checks
+
+1. Enable "Auto-Deploy" toggle
+2. Add Health Check Path: `/api/health`
+3. Set Health Check Interval: `10 minutes`
+
+### Step 4: Deploy
 
 - Click "Create Web Service"
-- Render will automatically build and deploy
-- Wait for "Live" status (3-5 minutes)
-- Note backend URL: `https://jobintel-backend.onrender.com`
+- Render starts building automatically (~3-5 minutes)
+- Wait for "Live" status ✅
+- Backend URL: `https://jobintel-backend.onrender.com`
+- Test: `curl https://jobintel-backend.onrender.com/api/health`
 
 ---
 
@@ -107,11 +126,12 @@ WHATSAPP_API_KEY=your-whatsapp-api-key
 
 ### Step 1: Create Netlify Site
 
-1. Go to [netlify.com](https://netlify.com)
+1. Go to [netlify.com](https://netlify.com) - Sign up/Login
 2. Click "Add new site" → "Import an existing project"
-3. Connect GitHub
-4. Select repository: `job-search`
-5. Fill in configuration:
+3. Select GitHub
+4. Authorize Netlify to access your GitHub
+5. Select repository: `pritamkumarchegg/job-search`
+6. Fill in configuration:
 
 | Field | Value |
 |-------|-------|
@@ -119,20 +139,25 @@ WHATSAPP_API_KEY=your-whatsapp-api-key
 | **Publish Directory** | `frontend/dist` |
 | **Node Version** | `20` |
 
-### Step 2: Add Environment Variables
+### Step 2: Add Environment Variables in Netlify
 
-In Netlify site settings, go to **Build & deploy** → **Environment**:
+After creating the site, go to **Site Settings** → **Build & deploy** → **Environment**:
 
+**Required:**
 ```bash
 VITE_API_URL=https://jobintel-backend.onrender.com
+NODE_ENV=production
 ```
 
-### Step 3: Deploy
+### Step 3: Trigger Deploy
 
 - Click "Deploy site"
-- Netlify will automatically build and deploy
+- Netlify auto-builds and deploys (~2-3 minutes)
 - Wait for deployment to complete
-- Your site URL: `https://jobintel.netlify.app` (or custom domain)
+- Your frontend URL: `https://jobintel.netlify.app`
+- Enable auto-deploy on push: Already enabled by default
+
+**Important:** Make sure Render backend is deployed first and `VITE_API_URL` is set to the Render backend URL before deploying frontend.
 
 ---
 
