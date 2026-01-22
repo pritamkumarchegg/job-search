@@ -1,15 +1,58 @@
 import { UsageTracking } from '../models/UsageTracking';
 import { User } from '../models/User';
+import { AdminSettings } from '../models/AdminSettings';
 import mongoose from 'mongoose';
 
-const ROLLING_WINDOW_DAYS = 15;
-const FREE_TIER_LIMIT_PER_WINDOW = 1; // 1 action per 15 days
+// Default constants
+const DEFAULT_ROLLING_WINDOW_DAYS = 15;
+const FREE_TIER_LIMIT_PER_WINDOW = 1; // 1 action per window
 
 export interface ActionPermission {
   allowed: boolean;
   reason?: string;
   remaining?: number;
   resetDate?: Date;
+}
+
+/**
+ * Get rolling window days from admin settings
+ */
+async function getRollingWindowDays(): Promise<number> {
+  try {
+    const setting = await AdminSettings.findOne({ key: 'premium_lock_days' });
+    return setting ? parseInt(setting.value) || DEFAULT_ROLLING_WINDOW_DAYS : DEFAULT_ROLLING_WINDOW_DAYS;
+  } catch (err) {
+    console.error('getRollingWindowDays error:', err);
+    return DEFAULT_ROLLING_WINDOW_DAYS;
+  }
+}
+
+/**
+ * Check if premium lock is enabled
+ */
+async function isPremiumLockEnabled(): Promise<boolean> {
+  try {
+    const setting = await AdminSettings.findOne({ key: 'premium_lock_enabled' });
+    return setting ? setting.value !== false : true; // Default to true
+  } catch (err) {
+    console.error('isPremiumLockEnabled error:', err);
+    return true;
+  }
+}
+
+/**
+ * Check if user is manually granted premium access
+ */
+async function isManualPremiumUser(userEmail: string): Promise<boolean> {
+  try {
+    const setting = await AdminSettings.findOne({ key: 'manual_premium_users' });
+    if (!setting) return false;
+    const users = Array.isArray(setting.value) ? setting.value : [];
+    return users.some((u: string) => u.toLowerCase() === userEmail.toLowerCase());
+  } catch (err) {
+    console.error('isManualPremiumUser error:', err);
+    return false;
+  }
 }
 
 /**
@@ -28,19 +71,32 @@ export async function checkActionPermission(
       return { allowed: false, reason: 'User not found' };
     }
 
+    // Check if premium lock is enabled
+    const lockEnabled = await isPremiumLockEnabled();
+    if (!lockEnabled) {
+      return { allowed: true }; // No restrictions if lock is disabled
+    }
+
     // Premium users can always perform actions
     if (user.tier === 'premium') {
       return { allowed: true };
     }
 
-    // Free users: check 15-day rolling window
-    const fifteenDaysAgo = new Date();
-    fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - ROLLING_WINDOW_DAYS);
+    // Check if user is manually granted premium
+    const isManualPremium = await isManualPremiumUser(user.email || '');
+    if (isManualPremium) {
+      return { allowed: true };
+    }
+
+    // Free users: check rolling window
+    const rollingWindowDays = await getRollingWindowDays();
+    const windowStart = new Date();
+    windowStart.setDate(windowStart.getDate() - rollingWindowDays);
 
     // Count actions in the rolling window
     const recentActions = await UsageTracking.countDocuments({
       userId: new mongoose.Types.ObjectId(userId),
-      timestamp: { $gte: fifteenDaysAgo },
+      timestamp: { $gte: windowStart },
     });
 
     if (recentActions >= FREE_TIER_LIMIT_PER_WINDOW) {
@@ -52,8 +108,8 @@ export async function checkActionPermission(
       );
 
       const resetDate = oldestAction
-        ? new Date(oldestAction.timestamp.getTime() + ROLLING_WINDOW_DAYS * 24 * 60 * 60 * 1000)
-        : new Date(Date.now() + ROLLING_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+        ? new Date(oldestAction.timestamp.getTime() + rollingWindowDays * 24 * 60 * 60 * 1000)
+        : new Date(Date.now() + rollingWindowDays * 24 * 60 * 60 * 1000);
 
       return {
         allowed: false,
@@ -107,6 +163,9 @@ export async function getUserUsageStats(userId: string) {
       return null;
     }
 
+    // Check if premium lock is enabled
+    const lockEnabled = await isPremiumLockEnabled();
+
     // Premium users have no limits
     if (user.tier === 'premium') {
       return {
@@ -118,26 +177,50 @@ export async function getUserUsageStats(userId: string) {
       };
     }
 
-    // Free users: check 15-day rolling window
-    const fifteenDaysAgo = new Date();
-    fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - ROLLING_WINDOW_DAYS);
+    // Check if user is manually granted premium
+    const isManualPremium = await isManualPremiumUser(user.email || '');
+    if (isManualPremium) {
+      return {
+        tier: 'premium',
+        usedActions: 0,
+        maxActions: Infinity,
+        remaining: Infinity,
+        resetDate: null,
+      };
+    }
+
+    // If lock is disabled, free users have unlimited access
+    if (!lockEnabled) {
+      return {
+        tier: 'free',
+        usedActions: 0,
+        maxActions: Infinity,
+        remaining: Infinity,
+        resetDate: null,
+      };
+    }
+
+    // Free users: check rolling window
+    const rollingWindowDays = await getRollingWindowDays();
+    const windowStart = new Date();
+    windowStart.setDate(windowStart.getDate() - rollingWindowDays);
 
     const recentActions = await UsageTracking.countDocuments({
       userId: new mongoose.Types.ObjectId(userId),
-      timestamp: { $gte: fifteenDaysAgo },
+      timestamp: { $gte: windowStart },
     });
 
     const oldestAction = await UsageTracking.findOne(
       {
         userId: new mongoose.Types.ObjectId(userId),
-        timestamp: { $gte: fifteenDaysAgo },
+        timestamp: { $gte: windowStart },
       },
       { timestamp: 1 },
       { sort: { timestamp: 1 } }
     );
 
     const resetDate = oldestAction
-      ? new Date(oldestAction.timestamp.getTime() + ROLLING_WINDOW_DAYS * 24 * 60 * 60 * 1000)
+      ? new Date(oldestAction.timestamp.getTime() + rollingWindowDays * 24 * 60 * 60 * 1000)
       : null;
 
     return {

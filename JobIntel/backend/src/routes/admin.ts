@@ -31,6 +31,8 @@ import {
   getSetting,
   updateSetting,
   deleteSetting,
+  grantManualPremium,
+  revokeManualPremium,
 } from '../controllers/adminSettingsController';
 
 const router = express.Router();
@@ -76,5 +78,9 @@ router.get('/settings', authenticateToken, requireRole('admin'), getAllSettings)
 router.get('/settings/:key', authenticateToken, requireRole('admin'), getSetting);
 router.put('/settings/:key', authenticateToken, requireRole('admin'), updateSetting);
 router.delete('/settings/:key', authenticateToken, requireRole('admin'), deleteSetting);
+
+// Manual premium access
+router.post('/grant-premium', authenticateToken, requireRole('admin'), grantManualPremium);
+router.post('/revoke-premium', authenticateToken, requireRole('admin'), revokeManualPremium);
 
 export default router;

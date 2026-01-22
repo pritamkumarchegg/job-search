@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Skill } from '../models/Skill';
 import { ProfileField } from '../models/ProfileField';
 import { AdminSettings } from '../models/AdminSettings';
+import { User } from '../models/User';
 import publishRealtime from '../utils/realtime';
 
 // Skills CRUD
@@ -175,6 +176,96 @@ export const deleteSetting = async (req: Request, res: Response) => {
     return res.json({ success: true });
   } catch (err: any) {
     console.error('deleteSetting', err);
+    return res.status(500).json({ error: err?.message || 'server error' });
+  }
+};
+
+/**
+ * Grant manual premium access to a user by email
+ */
+export const grantManualPremium = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'email required' });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email: { $regex: `^${email}$`, $options: 'i' } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found with this email' });
+    }
+
+    // Add to manual premium list
+    const setting = await AdminSettings.findOneAndUpdate(
+      { key: 'manual_premium_users' },
+      {
+        $addToSet: { value: email.toLowerCase() }
+      },
+      { new: true, upsert: true }
+    );
+
+    // If user is free tier, upgrade them to premium
+    if (user.tier === 'free') {
+      user.tier = 'premium';
+      await user.save();
+    }
+
+    publishRealtime('realtime:admin_settings', {
+      type: 'admin_settings',
+      action: 'grant_manual_premium',
+      email,
+      userId: user._id,
+    });
+
+    return res.json({ 
+      success: true, 
+      message: `User ${email} granted premium access`,
+      user: {
+        id: user._id,
+        email: user.email,
+        tier: user.tier,
+      }
+    });
+  } catch (err: any) {
+    console.error('grantManualPremium', err);
+    return res.status(500).json({ error: err?.message || 'server error' });
+  }
+};
+
+/**
+ * Revoke manual premium access from a user by email
+ */
+export const revokeManualPremium = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'email required' });
+    }
+
+    // Remove from manual premium list
+    const setting = await AdminSettings.findOneAndUpdate(
+      { key: 'manual_premium_users' },
+      {
+        $pull: { value: email.toLowerCase() }
+      },
+      { new: true }
+    );
+
+    publishRealtime('realtime:admin_settings', {
+      type: 'admin_settings',
+      action: 'revoke_manual_premium',
+      email,
+    });
+
+    return res.json({ 
+      success: true, 
+      message: `User ${email} manual premium access revoked`
+    });
+  } catch (err: any) {
+    console.error('revokeManualPremium', err);
     return res.status(500).json({ error: err?.message || 'server error' });
   }
 };
